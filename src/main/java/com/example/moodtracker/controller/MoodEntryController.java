@@ -14,7 +14,6 @@ public class MoodEntryController {
         this.service = service;
         this.mapper = mapper;
     }
-    // GET с RequestParam
     @GetMapping
     public List<MoodEntryDto> getByDate(@RequestParam LocalDate date) {
         return service.getByDate(date)
@@ -22,7 +21,6 @@ public class MoodEntryController {
                 .map(mapper::toDto)
                 .toList();
     }
-    // GET с PathVariable
     @GetMapping("/{id}")
     public MoodEntryDto getById(@PathVariable Long id) {
         return mapper.toDto(service.getById(id));
