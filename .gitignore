@@ -1,6 +1,7 @@
 # Compiled class file
 *.class
-
+/target
+/checkstyle
 # Log file
 *.log
 
