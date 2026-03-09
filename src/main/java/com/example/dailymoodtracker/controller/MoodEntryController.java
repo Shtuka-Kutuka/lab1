@@ -4,16 +4,14 @@ import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.mapper.MoodEntryMapper;
 import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.service.MoodEntryService;
+import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/moods")
@@ -22,24 +20,9 @@ public class MoodEntryController {
     private final MoodEntryService service;
     private final MoodEntryMapper mapper;
 
-    public MoodEntryController(MoodEntryService service,
-                               MoodEntryMapper mapper) {
+    public MoodEntryController(MoodEntryService service, MoodEntryMapper mapper) {
         this.service = service;
         this.mapper = mapper;
-    }
-
-    @GetMapping("/")
-    public Map<String, Object> showUserInfo() {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("userName", "Steve");
-        response.put("userStatus", "Java enjoyer");
-        response.put("lastEntryDate", "2026-03-01");
-        response.put("motivation", "finally some data!");
-        response.put("available_endpoints", Map.of(
-            "by_date", "/api/moods?date=2026-03-01",
-            "by_id", "/api/moods/1"
-        ));
-        return response;
     }
 
     @GetMapping
@@ -48,26 +31,42 @@ public class MoodEntryController {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate date) {
 
-        List<MoodEntry> entries = service.getByDate(date);
-
-        return entries.stream()
+        return service.getByDate(date)
+            .stream()
             .map(mapper::toDto)
             .toList();
     }
 
     @GetMapping("/{id}")
-    public MoodEntryDto getById(
-        @PathVariable("id") Long id) {
+    public MoodEntryDto getById(@PathVariable Long id) {
 
-        MoodEntry entry = service.getById(id);
+        return service.getById(id)
+            .map(mapper::toDto)
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Mood not found: " + id));
+    }
 
-        if (entry == null) {
-            throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Mood entry not found with id: " + id
-            );
-        }
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public MoodEntryDto create(@RequestBody MoodEntryDto dto) {
 
-        return mapper.toDto(entry);
+        MoodEntry entry = mapper.toEntity(dto);
+        return mapper.toDto(service.save(entry));
+    }
+
+    @PutMapping("/{id}")
+    public MoodEntryDto update(
+        @PathVariable Long id,
+        @RequestBody MoodEntryDto dto) {
+
+        MoodEntry updated = service.update(id, dto);
+        return mapper.toDto(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+
+        service.delete(id);
     }
 }

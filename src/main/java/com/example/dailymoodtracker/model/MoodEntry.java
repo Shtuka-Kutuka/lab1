@@ -1,54 +1,67 @@
 package com.example.dailymoodtracker.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
+import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
+@Table(name = "mood_entry")
 public class MoodEntry {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String mood;
-    private LocalDate date;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "mood_type_id")
+    private MoodType moodType;
+
+    private String note;
+
+    @Column(name = "entry_date")
+    private LocalDate entryDate;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "mood_entry_tag",
+        joinColumns = @JoinColumn(name = "mood_entry_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags;
 
     public MoodEntry() {
-    }
-
-    public MoodEntry(String mood, LocalDate date) {
-        this.mood = mood;
-        this.date = date;
-    }
-
-    // ДОБАВИТЬ ЭТОТ КОНСТРУКТОР
-    public MoodEntry(Long id, String mood, LocalDate date) {
-        this.id = id;
-        this.mood = mood;
-        this.date = date;
+        // Required by JPA
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getMood() {
-        return mood;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setMood(String mood) {
-        this.mood = mood;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public MoodType getMoodType() { return moodType; }
+    public void setMoodType(MoodType moodType) { this.moodType = moodType; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+    public LocalDate getEntryDate() { return entryDate; }
+    public void setEntryDate(LocalDate entryDate) { this.entryDate = entryDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Set<Tag> getTags() { return tags; }
+    public void setTags(Set<Tag> tags) { this.tags = tags; }
 
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
+    @Override
+    public String toString() {
+        return "MoodEntry{id=" + id + ", entryDate=" + entryDate + "}";
     }
 }
