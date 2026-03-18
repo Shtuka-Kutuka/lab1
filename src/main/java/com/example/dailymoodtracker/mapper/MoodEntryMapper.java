@@ -23,7 +23,7 @@ public class MoodEntryMapper {
 
     public MoodEntry toEntity(MoodEntryDto dto) {
         MoodEntry entity = new MoodEntry();
-        entity.setId(dto.id());      // ручной id
+        entity.setId(dto.id());
         entity.setEntryDate(dto.date());
 
         if (dto.mood() != null && !dto.mood().isEmpty()) {

@@ -24,8 +24,6 @@ public class UserController {
     public UserController(UserRepository repository) {
         this.repository = repository;
     }
-
-    // CREATE
     @PostMapping
     public UserDto create(@RequestBody UserDto dto) {
 
@@ -41,14 +39,11 @@ public class UserController {
             saved.getEmail()
         );
     }
-
-    // GET ALL
     @GetMapping
     public List<User> getAll() {
         return repository.findAll();
     }
 
-    // GET BY ID
     @GetMapping("/{id}")
     public User getById(@PathVariable Long id) {
         return repository.findById(id)
@@ -56,7 +51,6 @@ public class UserController {
                 new ResourceNotFoundException("User not found: " + id));
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);

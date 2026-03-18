@@ -30,7 +30,6 @@ public class GoalController {
         this.mapper = mapper;
     }
 
-    // POST
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public GoalDto create(@RequestBody GoalDto dto) {
@@ -40,7 +39,6 @@ public class GoalController {
         return mapper.toDto(service.create(goal));
     }
 
-    // GET ALL
     @GetMapping
     public List<GoalDto> getAll() {
 
@@ -50,21 +48,18 @@ public class GoalController {
             .toList();
     }
 
-    // GET BY ID
     @GetMapping("/{id}")
     public GoalDto getById(@PathVariable Long id) {
 
         return mapper.toDto(service.getById(id));
     }
 
-    // PUT
     @PutMapping("/{id}")
     public GoalDto update(@PathVariable Long id, @RequestBody GoalDto dto) {
 
         return mapper.toDto(service.update(id, dto));
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

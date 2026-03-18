@@ -23,7 +23,6 @@ public class GoalService {
         this.userRepository = userRepository;
     }
 
-    // POST
     public Goal create(Goal goal) {
 
         if (goal.getUser() != null) {
@@ -39,14 +38,12 @@ public class GoalService {
         return goalRepository.save(goal);
     }
 
-    // GET ALL
-    // СПЕЦИАЛЬНО создаёт N+1 проблему
+
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public List<Goal> getAll() {
 
         List<Goal> goals = goalRepository.findAll();
 
-        // LAZY загрузка пользователя
         for (Goal g : goals) {
             if (g.getUser() != null) {
                 g.getUser().getUsername();
@@ -56,14 +53,12 @@ public class GoalService {
         return goals;
     }
 
-    // GET BY ID
     public Goal getById(Long id) {
 
         return goalRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(GOAL_NOT_FOUND + id));
     }
 
-    // PUT
     public Goal update(Long id, GoalDto dto) {
 
         Goal goal = goalRepository.findById(id)
@@ -77,7 +72,6 @@ public class GoalService {
         return goalRepository.save(goal);
     }
 
-    // DELETE
     public void delete(Long id) {
 
         Goal goal = goalRepository.findById(id)
