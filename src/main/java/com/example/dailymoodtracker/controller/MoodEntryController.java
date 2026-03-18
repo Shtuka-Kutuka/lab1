@@ -60,7 +60,10 @@ public class MoodEntryController {
     public MoodEntryDto create(@RequestBody MoodEntryDto dto) {
 
         MoodEntry entry = mapper.toEntity(dto);
-        return mapper.toDto(service.save(entry));
+
+        MoodEntry saved = service.save(entry, dto.mood());
+
+        return mapper.toDto(saved);
     }
 
     @PutMapping("/{id}")

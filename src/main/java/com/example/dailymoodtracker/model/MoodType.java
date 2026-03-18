@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "mood_type")
@@ -13,6 +14,7 @@ public class MoodType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String name;
     private String emoji;
     private String description;
@@ -25,6 +27,7 @@ public class MoodType {
         this.emoji = emoji;
         this.description = description;
     }
+
     public String getName() {
         return name; }
     public void setName(String name) {
