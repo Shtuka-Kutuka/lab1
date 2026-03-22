@@ -24,12 +24,18 @@ public class TagService {
     }
 
     public List<Tag> getAll() {
-        return repository.findAll();
+        List<Tag> tags = repository.findAllWithNPlusOne();
+        tags.forEach(tag -> tag.getMoodEntries().size());
+        return tags;
     }
 
     public Tag getById(Long id) {
-        return repository.findById(id)
+        Tag tag = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+
+        tag.getMoodEntries().size();
+
+        return tag;
     }
 
     public Tag update(Long id, TagDto dto) {

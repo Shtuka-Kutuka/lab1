@@ -33,15 +33,12 @@ public class GoalController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public GoalDto create(@RequestBody GoalDto dto) {
-
         Goal goal = mapper.toEntity(dto);
-
         return mapper.toDto(service.create(goal));
     }
 
     @GetMapping
     public List<GoalDto> getAll() {
-
         return service.getAll()
             .stream()
             .map(mapper::toDto)
@@ -50,20 +47,27 @@ public class GoalController {
 
     @GetMapping("/{id}")
     public GoalDto getById(@PathVariable Long id) {
-
         return mapper.toDto(service.getById(id));
     }
 
     @PutMapping("/{id}")
     public GoalDto update(@PathVariable Long id, @RequestBody GoalDto dto) {
-
         return mapper.toDto(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-
         service.delete(id);
+    }
+
+    @PostMapping("/test/no-transaction")
+    public void testNoTransaction(@RequestBody GoalDto dto) {
+        service.createGoalWithoutTransaction(dto);
+    }
+
+    @PostMapping("/test/with-transaction")
+    public void testWithTransaction(@RequestBody GoalDto dto) {
+        service.createGoalWithTransaction(dto);
     }
 }
