@@ -1,21 +1,25 @@
 package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.dto.MoodEntryDto;
-import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 import com.example.dailymoodtracker.exception.DataConflictException;
+import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.MoodType;
+import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.model.User;
 import com.example.dailymoodtracker.repository.MoodEntryRepository;
 import com.example.dailymoodtracker.repository.MoodTypeRepository;
+import com.example.dailymoodtracker.repository.TagRepository;
 import com.example.dailymoodtracker.repository.UserRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MoodEntryService {
@@ -23,19 +27,22 @@ public class MoodEntryService {
     private final MoodEntryRepository repository;
     private final MoodTypeRepository moodTypeRepo;
     private final UserRepository userRepository;
+    private final TagRepository tagRepository;
 
     public MoodEntryService(
         MoodEntryRepository repository,
         MoodTypeRepository moodTypeRepo,
-        UserRepository userRepository) {
+        UserRepository userRepository,
+        TagRepository tagRepository) {
 
         this.repository = repository;
         this.moodTypeRepo = moodTypeRepo;
         this.userRepository = userRepository;
+        this.tagRepository = tagRepository;
     }
 
     public List<MoodEntry> getAll() {
-        return repository.findAll();
+        return repository.findAllWithRelations();
     }
 
     public List<MoodEntry> getByDate(LocalDate date) {
@@ -46,7 +53,7 @@ public class MoodEntryService {
         return repository.findById(id);
     }
 
-    public MoodEntry save(MoodEntry entry, String moodName) {
+    public MoodEntry save(MoodEntry entry, MoodEntryDto dto) {
 
         if (entry.getEntryDate() == null) {
             throw new DataConflictException("Entry date cannot be null");
@@ -63,11 +70,20 @@ public class MoodEntryService {
 
         entry.setUser(user);
 
-        if (moodName != null && !moodName.isEmpty()) {
-            MoodType mt = moodTypeRepo.findByName(moodName)
-                .orElseGet(() -> moodTypeRepo.save(new MoodType(moodName, null, null)));
+        if (dto.mood() != null && !dto.mood().isEmpty()) {
+            MoodType mt = moodTypeRepo.findByName(dto.mood())
+                .orElseGet(() -> moodTypeRepo.save(new MoodType(dto.mood(), null, null)));
 
             entry.setMoodType(mt);
+        }
+
+        if (dto.tagIds() != null && !dto.tagIds().isEmpty()) {
+            Set<Tag> tags = dto.tagIds().stream()
+                .map(id -> tagRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id)))
+                .collect(Collectors.toSet());
+
+            entry.setTags(tags);
         }
 
         return repository.save(entry);
@@ -97,6 +113,15 @@ public class MoodEntryService {
                 .orElseGet(() -> moodTypeRepo.save(new MoodType(dto.mood(), null, null)));
 
             entry.setMoodType(mt);
+        }
+
+        if (dto.tagIds() != null) {
+            Set<Tag> tags = dto.tagIds().stream()
+                .map(tagId -> tagRepository.findById(tagId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + tagId)))
+                .collect(Collectors.toSet());
+
+            entry.setTags(tags);
         }
 
         return repository.save(entry);

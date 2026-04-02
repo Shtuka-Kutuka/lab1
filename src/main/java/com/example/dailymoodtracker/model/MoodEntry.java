@@ -13,6 +13,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -25,12 +26,12 @@ public class MoodEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore // 🔥 FIX
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mood_type_id")
     private MoodType moodType;
 
@@ -42,7 +43,7 @@ public class MoodEntry {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @JsonIgnore // 🔥 FIX (опционально но желательно)
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "mood_entry_tag",
@@ -105,10 +106,5 @@ public class MoodEntry {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
-    }
-
-    @Override
-    public String toString() {
-        return "MoodEntry{id=" + id + ", entryDate=" + entryDate + "}";
     }
 }

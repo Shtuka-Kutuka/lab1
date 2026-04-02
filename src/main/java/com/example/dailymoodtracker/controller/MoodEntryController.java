@@ -66,7 +66,7 @@ public class MoodEntryController {
 
         MoodEntry entry = mapper.toEntity(dto);
 
-        MoodEntry saved = service.save(entry, dto.mood());
+        MoodEntry saved = service.save(entry, dto);
 
         return mapper.toDto(saved);
     }

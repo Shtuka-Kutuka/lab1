@@ -1,6 +1,7 @@
 package com.example.dailymoodtracker.controller;
 
 import com.example.dailymoodtracker.dto.TagDto;
+import com.example.dailymoodtracker.mapper.TagMapper;
 import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.service.TagService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,32 +20,34 @@ import java.util.List;
 public class TagController {
 
     private final TagService service;
+    private final TagMapper mapper;
 
-    public TagController(TagService service) {
+    public TagController(TagService service, TagMapper mapper) {
         this.service = service;
+        this.mapper = mapper;
     }
 
     @GetMapping
-    public List<Tag> getAll() {
-        return service.getAll();
+    public List<TagDto> getAll() {
+        return service.getAll().stream()
+            .map(mapper::toDto)
+            .toList();
     }
 
     @GetMapping("/{id}")
-    public Tag getById(@PathVariable Long id) {
-        return service.getById(id);
+    public TagDto getById(@PathVariable Long id) {
+        return mapper.toDto(service.getById(id));
     }
 
     @PostMapping
-    public Tag create(@RequestBody TagDto dto) {
-        Tag tag = new Tag();
-        tag.setName(dto.name());
-        tag.setColor(dto.color());
-        return service.create(tag);
+    public TagDto create(@RequestBody TagDto dto) {
+        Tag tag = mapper.toEntity(dto);
+        return mapper.toDto(service.create(tag));
     }
 
     @PutMapping("/{id}")
-    public Tag update(@PathVariable Long id, @RequestBody TagDto dto) {
-        return service.update(id, dto);
+    public TagDto update(@PathVariable Long id, @RequestBody TagDto dto) {
+        return mapper.toDto(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,6 @@
 package com.example.dailymoodtracker.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +13,7 @@ import java.util.Set;
 @Entity
 @Table(name = "tag")
 public class Tag {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,7 +22,7 @@ public class Tag {
     private String color;
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private Set<MoodEntry> moodEntries;
 
     public Tag() {

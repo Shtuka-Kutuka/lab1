@@ -6,7 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDate;
+import java.util.List;
 
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
 
@@ -20,4 +22,10 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
     Page<MoodEntry> findByTagNameNative(@Param("tagName") String tagName, Pageable pageable);
 
     Page<MoodEntry> findByEntryDate(LocalDate entryDate, Pageable pageable);
+
+    @Query("SELECT m FROM MoodEntry m " +
+        "LEFT JOIN FETCH m.moodType " +
+        "LEFT JOIN FETCH m.user " +
+        "LEFT JOIN FETCH m.tags")
+    List<MoodEntry> findAllWithRelations();
 }
