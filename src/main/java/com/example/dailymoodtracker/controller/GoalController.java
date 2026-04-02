@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 
+
 import java.util.List;
 
 @RestController
@@ -61,13 +62,13 @@ public class GoalController {
         service.delete(id);
     }
 
-    @PostMapping("/test/no-transaction")
-    public void testNoTransaction(@RequestBody GoalDto dto) {
-        service.createGoalWithoutTransaction(dto);
+    @PostMapping("/test/no-tx-related")
+    public void testNoTransactionRelated() {
+        service.createUserWithGoalsNoTransaction();
     }
 
-    @PostMapping("/test/with-transaction")
-    public void testWithTransaction(@RequestBody GoalDto dto) {
-        service.createGoalWithTransaction(dto);
+    @PostMapping("/test/tx-related")
+    public void testTransactionRelated() {
+        service.createUserWithGoalsWithTransaction();
     }
 }

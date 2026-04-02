@@ -76,49 +76,56 @@ public class GoalService {
         goalRepository.delete(goal);
     }
 
-    public void createGoalWithoutTransaction(GoalDto dto) {
+    public void createUserWithGoalsNoTransaction() {
+        User user = new User();
+        user.setUsername("test_user_no_tx");
+        user.setEmail("no_tx@mail.com");
 
-        Goal goal = buildGoal(dto);
+        user = userRepository.save(user);
 
-        goalRepository.save(goal);
+        Goal goal1 = new Goal();
+        goal1.setTitle("Goal 1");
+        goal1.setDescription("First goal");
+        goal1.setUser(user);
 
-        goal.setTitle(null);
+        goalRepository.save(goal1);
 
-        if (goal.getTitle() == null) {
-            throw new DataConflictException("Title became null after save");
+        Goal goal2 = new Goal();
+        goal2.setTitle(null);
+        goal2.setDescription("Second goal");
+        goal2.setUser(user);
+
+        if (goal2.getTitle() == null) {
+            throw new DataConflictException("Title cannot be null");
         }
 
-        goalRepository.save(goal);
+        goalRepository.save(goal2);
     }
 
     @Transactional
-    public void createGoalWithTransaction(GoalDto dto) {
+    public void createUserWithGoalsWithTransaction() {
+        User user = new User();
+        user.setUsername("test_user_tx");
+        user.setEmail("tx@mail.com");
 
-        Goal goal = buildGoal(dto);
+        user = userRepository.save(user);
 
-        goalRepository.save(goal);
+        Goal goal1 = new Goal();
+        goal1.setTitle("Goal 1");
+        goal1.setDescription("First goal");
+        goal1.setUser(user);
 
-        goal.setDescription(null);
+        goalRepository.save(goal1);
 
-        if (goal.getDescription() == null) {
-            throw new DataConflictException("Description became null after save");
+        Goal goal2 = new Goal();
+        goal2.setTitle(null);
+        goal2.setDescription("Second goal");
+        goal2.setUser(user);
+
+        if (goal2.getTitle() == null) {
+            throw new DataConflictException("Title cannot be null");
         }
 
-        goalRepository.save(goal);
-    }
-
-    private Goal buildGoal(GoalDto dto) {
-        Goal goal = new Goal();
-        goal.setTitle(dto.title());
-        goal.setDescription(dto.description());
-        goal.setTargetDate(dto.targetDate());
-
-        if (dto.userId() != null) {
-            User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + dto.userId()));
-            goal.setUser(user);
-        }
-
-        return goal;
+        goalRepository.save(goal2);
     }
 }
