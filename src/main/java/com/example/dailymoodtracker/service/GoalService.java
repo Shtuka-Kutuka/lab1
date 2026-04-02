@@ -75,11 +75,11 @@ public class GoalService {
 
         goalRepository.delete(goal);
     }
+    private void createUserWithGoalsInternal(String username, String email) {
 
-    public void createUserWithGoalsNoTransaction() {
         User user = new User();
-        user.setUsername("test_user_no_tx");
-        user.setEmail("no_tx@mail.com");
+        user.setUsername(username);
+        user.setEmail(email);
 
         user = userRepository.save(user);
 
@@ -101,31 +101,12 @@ public class GoalService {
 
         goalRepository.save(goal2);
     }
+    public void createUserWithGoalsNoTransaction() {
+        createUserWithGoalsInternal("test_user_no_tx", "no_tx@mail.com");
+    }
 
     @Transactional
     public void createUserWithGoalsWithTransaction() {
-        User user = new User();
-        user.setUsername("test_user_tx");
-        user.setEmail("tx@mail.com");
-
-        user = userRepository.save(user);
-
-        Goal goal1 = new Goal();
-        goal1.setTitle("Goal 1");
-        goal1.setDescription("First goal");
-        goal1.setUser(user);
-
-        goalRepository.save(goal1);
-
-        Goal goal2 = new Goal();
-        goal2.setTitle(null);
-        goal2.setDescription("Second goal");
-        goal2.setUser(user);
-
-        if (goal2.getTitle() == null) {
-            throw new DataConflictException("Title cannot be null");
-        }
-
-        goalRepository.save(goal2);
+        createUserWithGoalsInternal("test_user_tx", "tx@mail.com");
     }
 }
