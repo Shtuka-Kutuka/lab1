@@ -49,7 +49,7 @@ public class GoalService {
     }
 
     public Goal getById(Long id) {
-        return goalRepository.findById(id)
+        return goalRepository.findWithUserById(id)
             .orElseThrow(() -> new ResourceNotFoundException(GOAL_NOT_FOUND + id));
     }
 

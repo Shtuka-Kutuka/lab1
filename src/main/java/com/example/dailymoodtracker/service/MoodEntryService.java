@@ -54,7 +54,9 @@ public class MoodEntryService {
         return repository.findByUserId(userId);
     }
 
+    // ✅ JPQL + cache
     public Page<MoodEntry> findComplex(Long userId, String moodName, Pageable pageable) {
+
         MoodEntryQueryKey key = new MoodEntryQueryKey(
             userId, moodName, pageable.getPageNumber(), pageable.getPageSize()
         );
@@ -65,7 +67,9 @@ public class MoodEntryService {
         });
     }
 
+    // ✅ Native + cache
     public Page<MoodEntry> findComplexNative(Long userId, String moodName, Pageable pageable) {
+
         MoodEntryQueryKey key = new MoodEntryQueryKey(
             userId, moodName, pageable.getPageNumber(), pageable.getPageSize()
         );
@@ -104,7 +108,7 @@ public class MoodEntryService {
             entry.setTags(tags);
         }
 
-        cache.clear();
+        cache.clear(); // ✅ инвалидация
         return repository.save(entry);
     }
 
@@ -116,7 +120,7 @@ public class MoodEntryService {
 
         entry.setEntryDate(dto.date());
 
-        cache.clear();
+        cache.clear(); // ✅ инвалидация
         return repository.save(entry);
     }
 
@@ -126,6 +130,6 @@ public class MoodEntryService {
             .orElseThrow(() -> new ResourceNotFoundException("Mood not found: " + id));
 
         repository.delete(entry);
-        cache.clear();
+        cache.clear(); // ✅ инвалидация
     }
 }

@@ -28,7 +28,7 @@ public class TagService {
     }
 
     public Tag getById(Long id) {
-        return repository.findById(id)
+        return repository.findWithMoodEntriesById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
     }
 

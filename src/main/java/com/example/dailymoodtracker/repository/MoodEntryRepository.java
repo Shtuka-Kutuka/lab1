@@ -7,29 +7,44 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.List;
-
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
 
     @Override
     @EntityGraph(attributePaths = {"user", "moodType", "tags"})
-    List<MoodEntry> findAll();
+    java.util.List<MoodEntry> findAll();
 
     @EntityGraph(attributePaths = {"moodType", "tags"})
-    List<MoodEntry> findByUserId(Long userId);
+    java.util.List<MoodEntry> findByUserId(Long userId);
 
-    @Query("""
-        SELECT m.id FROM MoodEntry m
-        WHERE m.user.id = :userId AND m.moodType.name = :moodName
-        """)
-    Page<Long> findIds(Long userId, String moodName, Pageable pageable);
+    // ✅ JPQL (по вложенной сущности)
+    @EntityGraph(attributePaths = {"user", "moodType", "tags"})
+    @Query(
+        value = """
+        SELECT m FROM MoodEntry m
+        JOIN m.moodType mt
+        WHERE m.user.id = :userId AND mt.name = :moodName
+        """,
+        countQuery = """
+        SELECT COUNT(m) FROM MoodEntry m
+        JOIN m.moodType mt
+        WHERE m.user.id = :userId AND mt.name = :moodName
+        """
+    )
+    Page<MoodEntry> findComplex(Long userId, String moodName, Pageable pageable);
 
-    @Query("""
-        SELECT DISTINCT m FROM MoodEntry m
-        JOIN FETCH m.user
-        JOIN FETCH m.moodType
-        LEFT JOIN FETCH m.tags
-        WHERE m.id IN :ids
-        """)
-    List<MoodEntry> findWithRelations(List<Long> ids);
+    // ✅ Native query
+    @Query(
+        value = """
+            SELECT * FROM mood_entry m
+            JOIN mood_type mt ON m.mood_type_id = mt.id
+            WHERE m.user_id = :userId AND mt.name = :moodName
+            """,
+        countQuery = """
+            SELECT COUNT(*) FROM mood_entry m
+            JOIN mood_type mt ON m.mood_type_id = mt.id
+            WHERE m.user_id = :userId AND mt.name = :moodName
+            """,
+        nativeQuery = true
+    )
+    Page<MoodEntry> findComplexNative(Long userId, String moodName, Pageable pageable);
 }
