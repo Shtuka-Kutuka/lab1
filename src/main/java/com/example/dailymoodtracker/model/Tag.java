@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.FetchType;
+
 import java.util.Set;
 
 @Entity
@@ -26,7 +27,7 @@ public class Tag {
     private Set<MoodEntry> moodEntries;
 
     public Tag() {
-        //Required by JPA
+        // Required by JPA
     }
 
     public Long getId() {

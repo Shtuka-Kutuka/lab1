@@ -13,7 +13,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -25,6 +24,14 @@ public class MoodEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // 🔥 FK поле для native
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
+
+    // 🔥 FK поле для native
+    @Column(name = "mood_type_id", insertable = false, updatable = false)
+    private Long moodTypeId;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,11 +60,20 @@ public class MoodEntry {
     private Set<Tag> tags;
 
     public MoodEntry() {
-        //Required by JPA
     }
 
     public Long getId() {
         return id;
+    }
+
+    // ✅ NEW
+    public Long getUserId() {
+        return userId;
+    }
+
+    // ✅ NEW
+    public Long getMoodTypeId() {
+        return moodTypeId;
     }
 
     public void setId(Long id) {

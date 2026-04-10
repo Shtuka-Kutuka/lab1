@@ -10,36 +10,54 @@ import jakarta.persistence.Column;
 @Entity
 @Table(name = "mood_type")
 public class MoodType {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true)
     private String name;
+
     private String emoji;
     private String description;
 
     public MoodType() {
-        // Required by JPA
     }
+
     public MoodType(String name, String emoji, String description) {
         this.name = name;
         this.emoji = emoji;
         this.description = description;
     }
 
+    // ✅ FIX: добавлен getter
+    public Long getId() {
+        return id;
+    }
+
     public String getName() {
-        return name; }
+        return name;
+    }
+
     public void setName(String name) {
-        this.name = name; }
+        this.name = name;
+    }
+
     public String getEmoji() {
-        return emoji; }
+        return emoji;
+    }
+
     public void setEmoji(String emoji) {
-        this.emoji = emoji; }
+        this.emoji = emoji;
+    }
+
     public String getDescription() {
-        return description; }
+        return description;
+    }
+
     public void setDescription(String description) {
-        this.description = description; }
+        this.description = description;
+    }
 
     @Override
     public String toString() {

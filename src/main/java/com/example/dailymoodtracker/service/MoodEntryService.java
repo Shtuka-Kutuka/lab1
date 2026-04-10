@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -38,8 +41,8 @@ public class MoodEntryService {
         MoodEntryRepository repository,
         MoodTypeRepository moodTypeRepo,
         UserRepository userRepository,
-        TagRepository tagRepository) {
-
+        TagRepository tagRepository
+    ) {
         this.repository = repository;
         this.moodTypeRepo = moodTypeRepo;
         this.userRepository = userRepository;
@@ -54,7 +57,6 @@ public class MoodEntryService {
         return repository.findByUserId(userId);
     }
 
-    // ✅ JPQL + cache
     public Page<MoodEntry> findComplex(Long userId, String moodName, Pageable pageable) {
 
         MoodEntryQueryKey key = new MoodEntryQueryKey(
@@ -62,12 +64,11 @@ public class MoodEntryService {
         );
 
         return cache.computeIfAbsent(key, k -> {
-            System.out.println("DB JPQL");
+            System.out.println("DB JPQL JOIN FETCH");
             return repository.findComplex(userId, moodName, pageable);
         });
     }
 
-    // ✅ Native + cache
     public Page<MoodEntry> findComplexNative(Long userId, String moodName, Pageable pageable) {
 
         MoodEntryQueryKey key = new MoodEntryQueryKey(
@@ -76,8 +77,50 @@ public class MoodEntryService {
 
         return cache.computeIfAbsent(key, k -> {
             System.out.println("DB NATIVE");
-            return repository.findComplexNative(userId, moodName, pageable);
+
+            Page<MoodEntry> page = repository.findComplexNative(userId, moodName, pageable);
+            List<MoodEntry> entries = page.getContent();
+
+            if (entries.isEmpty()) {
+                return page;
+            }
+
+            Map<Long, User> users = userRepository.findAllById(
+                entries.stream().map(MoodEntry::getUserId).toList()
+            ).stream().collect(Collectors.toMap(User::getId, u -> u));
+
+            Map<Long, MoodType> moods = moodTypeRepo.findAllById(
+                entries.stream().map(MoodEntry::getMoodTypeId).toList()
+            ).stream().collect(Collectors.toMap(MoodType::getId, m -> m));
+
+            Map<Long, Set<Tag>> tagsMap = loadTags(entries);
+
+            for (MoodEntry e : entries) {
+                e.setUser(users.get(e.getUserId()));
+                e.setMoodType(moods.get(e.getMoodTypeId()));
+                e.setTags(tagsMap.getOrDefault(e.getId(), Collections.emptySet()));
+            }
+
+            return page;
         });
+    }
+
+    private Map<Long, Set<Tag>> loadTags(List<MoodEntry> entries) {
+
+        List<Long> ids = entries.stream().map(MoodEntry::getId).toList();
+
+        List<Object[]> rows = tagRepository.findTagsByMoodEntryIds(ids);
+
+        Map<Long, Set<Tag>> result = new HashMap<>();
+
+        for (Object[] row : rows) {
+            Long moodEntryId = (Long) row[0];
+            Tag tag = (Tag) row[1];
+
+            result.computeIfAbsent(moodEntryId, k -> new HashSet<>()).add(tag);
+        }
+
+        return result;
     }
 
     public MoodEntry save(MoodEntry entry, MoodEntryDto dto) {
@@ -108,7 +151,7 @@ public class MoodEntryService {
             entry.setTags(tags);
         }
 
-        cache.clear(); // ✅ инвалидация
+        cache.clear();
         return repository.save(entry);
     }
 
@@ -120,7 +163,7 @@ public class MoodEntryService {
 
         entry.setEntryDate(dto.date());
 
-        cache.clear(); // ✅ инвалидация
+        cache.clear();
         return repository.save(entry);
     }
 
@@ -130,6 +173,6 @@ public class MoodEntryService {
             .orElseThrow(() -> new ResourceNotFoundException("Mood not found: " + id));
 
         repository.delete(entry);
-        cache.clear(); // ✅ инвалидация
+        cache.clear();
     }
 }
