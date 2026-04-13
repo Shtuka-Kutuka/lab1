@@ -94,7 +94,6 @@ public class GoalService {
             goal.setAchieved(goalDto.achieved());
             goal.setUser(user);
 
-            // имитируем ошибку
             if (goal.getTitle() == null) {
                 throw new DataConflictException("Title cannot be null");
             }

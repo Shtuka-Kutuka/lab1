@@ -2,7 +2,9 @@ package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.dto.MoodTypeDto;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
+import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.MoodType;
+import com.example.dailymoodtracker.repository.MoodEntryRepository;
 import com.example.dailymoodtracker.repository.MoodTypeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +17,14 @@ public class MoodTypeService {
     private static final String NOT_FOUND_MESSAGE = "MoodType not found: ";
 
     private final MoodTypeRepository repository;
+    private final MoodEntryRepository moodEntryRepository;
     private final MoodEntryService moodEntryService;
 
     public MoodTypeService(MoodTypeRepository repository,
+                           MoodEntryRepository moodEntryRepository,
                            MoodEntryService moodEntryService) {
         this.repository = repository;
+        this.moodEntryRepository = moodEntryRepository;
         this.moodEntryService = moodEntryService;
     }
 
@@ -66,6 +71,14 @@ public class MoodTypeService {
     public void delete(Long id) {
         MoodType moodType = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+        List<MoodEntry> entries = moodEntryRepository.findAll();
+
+        for (MoodEntry entry : entries) {
+            if (entry.getMoodType() != null &&
+                entry.getMoodType().getId().equals(id)) {
+                entry.setMoodType(null);
+            }
+        }
 
         repository.delete(moodType);
 

@@ -2,6 +2,7 @@ package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.dto.TagDto;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
+import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.repository.TagRepository;
 import org.springframework.stereotype.Service;
@@ -60,8 +61,14 @@ public class TagService {
 
     @Transactional
     public void delete(Long id) {
-        Tag tag = repository.findById(id)
+        Tag tag = repository.findWithMoodEntriesById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+
+        for (MoodEntry entry : tag.getMoodEntries()) {
+            entry.getTags().remove(tag);
+        }
+
+        tag.getMoodEntries().clear();
 
         repository.delete(tag);
 
