@@ -8,7 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
 
-    @Override
+    @Query("""
+        SELECT DISTINCT m FROM MoodEntry m
+        LEFT JOIN FETCH m.user
+        LEFT JOIN FETCH m.moodType
+        LEFT JOIN FETCH m.tags
+        """)
     java.util.List<MoodEntry> findAll();
 
     java.util.List<MoodEntry> findByUserId(Long userId);

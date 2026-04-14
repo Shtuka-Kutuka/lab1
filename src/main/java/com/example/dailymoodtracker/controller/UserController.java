@@ -5,6 +5,8 @@ import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 import com.example.dailymoodtracker.mapper.UserMapper;
 import com.example.dailymoodtracker.model.User;
 import com.example.dailymoodtracker.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Users", description = "User API")
 public class UserController {
 
     private final UserRepository repository;
@@ -28,6 +31,7 @@ public class UserController {
         this.mapper = mapper;
     }
 
+    @Operation(summary = "Create user")
     @PostMapping
     public UserDto create(@Valid @RequestBody UserDto dto) {
         User user = mapper.toEntity(dto);
@@ -35,20 +39,21 @@ public class UserController {
         return mapper.toDto(saved);
     }
 
+    @Operation(summary = "Get all users")
     @GetMapping
     public List<UserDto> getAll() {
         return repository.findAllDto();
     }
 
+    @Operation(summary = "Get user by id")
     @GetMapping("/{id}")
     public UserDto getById(@PathVariable Long id) {
         User user = repository.findById(id)
-            .orElseThrow(() ->
-                new ResourceNotFoundException("User not found: " + id));
-
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
         return mapper.toDto(user);
     }
 
+    @Operation(summary = "Delete user")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);
