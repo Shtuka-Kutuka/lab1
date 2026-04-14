@@ -5,14 +5,14 @@ import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 import com.example.dailymoodtracker.mapper.UserMapper;
 import com.example.dailymoodtracker.model.User;
 import com.example.dailymoodtracker.repository.UserRepository;
-import org.springframework.web.bind.annotation.GetMapping;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
-
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDto create(@RequestBody UserDto dto) {
+    public UserDto create(@Valid @RequestBody UserDto dto) {
         User user = mapper.toEntity(dto);
         User saved = repository.save(user);
         return mapper.toDto(saved);

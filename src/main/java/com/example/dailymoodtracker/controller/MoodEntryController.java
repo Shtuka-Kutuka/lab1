@@ -3,7 +3,7 @@ package com.example.dailymoodtracker.controller;
 import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.mapper.MoodEntryMapper;
 import com.example.dailymoodtracker.service.MoodEntryService;
-
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
-
 
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class MoodEntryController {
     }
 
     @PostMapping
-    public MoodEntryDto create(@RequestBody MoodEntryDto dto) {
+    public MoodEntryDto create(@Valid @RequestBody MoodEntryDto dto) {
         return mapper.toDto(
             service.save(mapper.toEntity(dto), dto)
         );

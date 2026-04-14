@@ -40,6 +40,9 @@ public class GoalService {
 
             goal.setUser(user);
         }
+        if (goal.getTitle().equalsIgnoreCase("Forbidden")) {
+            throw new DataConflictException("Forbidden title");
+        }
 
         return goalRepository.save(goal);
     }

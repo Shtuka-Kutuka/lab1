@@ -5,7 +5,11 @@ import com.example.dailymoodtracker.dto.UserWithGoalsDto;
 import com.example.dailymoodtracker.mapper.GoalMapper;
 import com.example.dailymoodtracker.model.Goal;
 import com.example.dailymoodtracker.service.GoalService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -15,8 +19,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
-
-
 
 import java.util.List;
 
@@ -32,9 +34,10 @@ public class GoalController {
         this.mapper = mapper;
     }
 
+    @Operation(summary = "Create goal")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public GoalDto create(@RequestBody GoalDto dto) {
+    public GoalDto create(@Valid @RequestBody GoalDto dto) {
         Goal goal = mapper.toEntity(dto);
         return mapper.toDto(service.create(goal));
     }
@@ -53,7 +56,7 @@ public class GoalController {
     }
 
     @PutMapping("/{id}")
-    public GoalDto update(@PathVariable Long id, @RequestBody GoalDto dto) {
+    public GoalDto update(@PathVariable Long id, @Valid @RequestBody GoalDto dto) {
         return mapper.toDto(service.update(id, dto));
     }
 
