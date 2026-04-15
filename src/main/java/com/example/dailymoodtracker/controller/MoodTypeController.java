@@ -5,6 +5,7 @@ import com.example.dailymoodtracker.model.MoodType;
 import com.example.dailymoodtracker.service.MoodTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +42,7 @@ public class MoodTypeController {
 
     @Operation(summary = "Create mood type")
     @PostMapping
-    public MoodType create(@RequestBody MoodTypeDto dto) {
+    public MoodType create(@Valid @RequestBody MoodTypeDto dto) {
         MoodType moodType = new MoodType();
         moodType.setName(dto.name());
         moodType.setEmoji(dto.emoji());
@@ -51,7 +52,7 @@ public class MoodTypeController {
 
     @Operation(summary = "Update mood type")
     @PutMapping("/{id}")
-    public MoodType update(@PathVariable Long id, @RequestBody MoodTypeDto dto) {
+    public MoodType update(@PathVariable Long id, @Valid @RequestBody MoodTypeDto dto) {
         return service.update(id, dto);
     }
 

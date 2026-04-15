@@ -1,6 +1,7 @@
 package com.example.dailymoodtracker.controller;
 
 import com.example.dailymoodtracker.dto.UserDto;
+import com.example.dailymoodtracker.exception.DataConflictException;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 import com.example.dailymoodtracker.mapper.UserMapper;
 import com.example.dailymoodtracker.model.User;
@@ -34,6 +35,15 @@ public class UserController {
     @Operation(summary = "Create user")
     @PostMapping
     public UserDto create(@Valid @RequestBody UserDto dto) {
+
+        if (dto.username() == null || dto.username().isBlank()) {
+            throw new DataConflictException("Username cannot be empty");
+        }
+
+        if (dto.email() == null || dto.email().isBlank()) {
+            throw new DataConflictException("Email cannot be empty");
+        }
+
         User user = mapper.toEntity(dto);
         User saved = repository.save(user);
         return mapper.toDto(saved);
@@ -56,6 +66,11 @@ public class UserController {
     @Operation(summary = "Delete user")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
+
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found: " + id);
+        }
+
         repository.deleteById(id);
     }
 }

@@ -5,6 +5,7 @@ import com.example.dailymoodtracker.mapper.TagMapper;
 import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,14 +43,14 @@ public class TagController {
 
     @Operation(summary = "Create tag")
     @PostMapping
-    public TagDto create(@RequestBody TagDto dto) {
+    public TagDto create(@Valid @RequestBody TagDto dto) {
         Tag tag = mapper.toEntity(dto);
         return mapper.toDto(service.create(tag));
     }
 
     @Operation(summary = "Update tag")
     @PutMapping("/{id}")
-    public TagDto update(@PathVariable Long id, @RequestBody TagDto dto) {
+    public TagDto update(@PathVariable Long id, @Valid @RequestBody TagDto dto) {
         return mapper.toDto(service.update(id, dto));
     }
 

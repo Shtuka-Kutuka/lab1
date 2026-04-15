@@ -2,6 +2,7 @@ package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.dto.MoodTypeDto;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
+import com.example.dailymoodtracker.exception.DataConflictException;
 import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.MoodType;
 import com.example.dailymoodtracker.repository.MoodEntryRepository;
@@ -29,6 +30,11 @@ public class MoodTypeService {
     }
 
     public MoodType create(MoodType moodType) {
+
+        if (moodType.getName() == null || moodType.getName().isBlank()) {
+            throw new DataConflictException("Mood name cannot be empty");
+        }
+
         MoodType saved = repository.save(moodType);
         moodEntryService.invalidateCache();
         return saved;
@@ -47,6 +53,10 @@ public class MoodTypeService {
     public MoodType update(Long id, MoodTypeDto dto) {
         MoodType moodType = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+
+        if (dto.name() != null && dto.name().isBlank()) {
+            throw new DataConflictException("Mood name cannot be empty");
+        }
 
         if (dto.name() != null) {
             moodType.setName(dto.name());

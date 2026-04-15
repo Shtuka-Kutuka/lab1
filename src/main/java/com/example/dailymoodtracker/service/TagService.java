@@ -2,6 +2,7 @@ package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.dto.TagDto;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
+import com.example.dailymoodtracker.exception.DataConflictException;
 import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.repository.TagRepository;
@@ -25,6 +26,11 @@ public class TagService {
     }
 
     public Tag create(Tag tag) {
+
+        if (tag.getName() == null || tag.getName().isBlank()) {
+            throw new DataConflictException("Tag name cannot be empty");
+        }
+
         Tag saved = repository.save(tag);
         moodEntryService.invalidateCache();
         return saved;
@@ -43,6 +49,10 @@ public class TagService {
     public Tag update(Long id, TagDto dto) {
         Tag tag = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+
+        if (dto.name() != null && dto.name().isBlank()) {
+            throw new DataConflictException("Tag name cannot be empty");
+        }
 
         if (dto.name() != null) {
             tag.setName(dto.name());
