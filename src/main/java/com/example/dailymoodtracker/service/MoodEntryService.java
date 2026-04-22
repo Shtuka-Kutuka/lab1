@@ -4,8 +4,14 @@ import com.example.dailymoodtracker.cache.MoodEntryQueryKey;
 import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.exception.DataConflictException;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
-import com.example.dailymoodtracker.model.*;
-import com.example.dailymoodtracker.repository.*;
+import com.example.dailymoodtracker.model.MoodEntry;
+import com.example.dailymoodtracker.model.MoodType;
+import com.example.dailymoodtracker.model.Tag;
+import com.example.dailymoodtracker.model.User;
+import com.example.dailymoodtracker.repository.MoodEntryRepository;
+import com.example.dailymoodtracker.repository.MoodTypeRepository;
+import com.example.dailymoodtracker.repository.TagRepository;
+import com.example.dailymoodtracker.repository.UserRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +21,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Objects;
+import java.util.Map;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -53,8 +64,12 @@ public class MoodEntryService {
 
         return dtos.stream()
             .map(this::buildEntityFromDto)
-            .map(repository::save) // ❗ сохраняется по одному
-            .peek(e -> LOGGER.debug("Saved entry id={}", e.getId()))
+            .map(repository::save)
+            .peek(e -> {
+                if (e != null) {
+                    LOGGER.debug("Saved entry id={}", e.getId());
+                }
+            })
             .toList();
     }
 
@@ -78,11 +93,66 @@ public class MoodEntryService {
         return result;
     }
 
-    // ===================== HELPER =====================
+    // ===================== BUSINESS BULK (validated) =====================
+
+    @Transactional
+    public List<MoodEntry> saveAllValidated(List<MoodEntryDto> dtos) {
+
+        if (dtos == null || dtos.isEmpty()) {
+            throw new DataConflictException("Mood entries list cannot be empty");
+        }
+
+        Long userId = dtos.get(0).userId();
+
+        boolean sameUser = dtos.stream()
+            .allMatch(d -> Objects.equals(d.userId(), userId));
+
+        if (!sameUser) {
+            throw new DataConflictException("All entries must belong to the same user");
+        }
+
+        User user = resolveUser(userId);
+
+        List<MoodEntry> entries = dtos.stream()
+            .map(this::buildEntityFromDto)
+            .peek(e -> e.setUser(user))
+            .toList();
+
+        List<MoodEntry> saved = repository.saveAll(entries);
+
+        cache.clear();
+
+        return saved;
+    }
+
+    // ===================== SINGLE SAVE =====================
+
+    public MoodEntry save(MoodEntry entry, MoodEntryDto dto) {
+
+        Long userId = Optional.ofNullable(entry.getUser())
+            .map(User::getId)
+            .orElse(null);
+
+        // 🔥 ключевая правка: всегда через resolveUser
+        User user = resolveUser(userId);
+
+        if (entry.getEntryDate() == null) {
+            throw new DataConflictException("Entry date cannot be null");
+        }
+
+        entry.setUser(user);
+        entry.setMoodType(resolveMoodType(dto.mood()));
+        entry.setTags(resolveTags(dto.tagIds()));
+
+        cache.clear();
+
+        return repository.save(entry);
+    }
+
+    // ===================== HELPERS =====================
 
     private MoodEntry buildEntityFromDto(MoodEntryDto dto) {
 
-        // 💣 Искусственная ошибка для демонстрации транзакций
         if ("ERROR".equalsIgnoreCase(dto.mood())) {
             throw new DataConflictException("Artificial failure triggered");
         }
@@ -90,66 +160,33 @@ public class MoodEntryService {
         MoodEntry entry = new MoodEntry();
         entry.setEntryDate(dto.date());
 
-        User user = userRepository.findById(dto.userId())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + dto.userId()));
-
-        entry.setUser(user);
-
-        Optional.ofNullable(dto.mood())
-            .ifPresent(mood -> {
-                MoodType mt = moodTypeRepo.findByName(mood)
-                    .orElseGet(() -> moodTypeRepo.save(new MoodType(mood, null, null)));
-                entry.setMoodType(mt);
-            });
-
-        Set<Tag> tags = Optional.ofNullable(dto.tagIds())
-            .orElse(Collections.emptyList())
-            .stream()
-            .map(id -> tagRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id)))
-            .collect(Collectors.toSet());
-
-        entry.setTags(tags);
+        entry.setUser(resolveUser(dto.userId()));
+        entry.setMoodType(resolveMoodType(dto.mood()));
+        entry.setTags(resolveTags(dto.tagIds()));
 
         return entry;
     }
 
-    // ===================== SINGLE SAVE =====================
-
-    public MoodEntry save(MoodEntry entry, MoodEntryDto dto) {
-
-        if (entry.getEntryDate() == null) {
-            throw new DataConflictException("Entry date cannot be null");
-        }
-
-        Long userId = Optional.ofNullable(entry.getUser())
-            .map(User::getId)
-            .orElseThrow(() -> new DataConflictException("UserId cannot be null"));
-
-        User user = userRepository.findById(userId)
+    private User resolveUser(Long userId) {
+        return Optional.ofNullable(userId)
+            .flatMap(userRepository::findById)
             .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+    }
 
-        entry.setUser(user);
+    private MoodType resolveMoodType(String moodName) {
+        return Optional.ofNullable(moodName)
+            .map(name -> moodTypeRepo.findByName(name)
+                .orElseGet(() -> moodTypeRepo.save(new MoodType(name, null, null))))
+            .orElse(null);
+    }
 
-        Optional.ofNullable(dto.mood())
-            .ifPresent(mood -> {
-                MoodType mt = moodTypeRepo.findByName(mood)
-                    .orElseGet(() -> moodTypeRepo.save(new MoodType(mood, null, null)));
-                entry.setMoodType(mt);
-            });
-
-        Set<Tag> tags = Optional.ofNullable(dto.tagIds())
+    private Set<Tag> resolveTags(List<Long> tagIds) {
+        return Optional.ofNullable(tagIds)
             .orElse(Collections.emptyList())
             .stream()
             .map(id -> tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id)))
             .collect(Collectors.toSet());
-
-        entry.setTags(tags);
-
-        cache.clear();
-
-        return repository.save(entry);
     }
 
     // ===================== READ =====================

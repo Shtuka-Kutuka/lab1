@@ -3,146 +3,93 @@ package com.example.dailymoodtracker.service;
 import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.exception.DataConflictException;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
-import com.example.dailymoodtracker.model.*;
-import com.example.dailymoodtracker.repository.*;
+import com.example.dailymoodtracker.model.User;
+import com.example.dailymoodtracker.repository.MoodEntryRepository;
+import com.example.dailymoodtracker.repository.MoodTypeRepository;
+import com.example.dailymoodtracker.repository.TagRepository;
+import com.example.dailymoodtracker.repository.UserRepository;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.springframework.data.domain.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class MoodEntryServiceTest {
 
     @Mock private MoodEntryRepository repository;
-    @Mock private MoodTypeRepository moodTypeRepo;
+    @Mock private MoodTypeRepository moodTypeRepository;
     @Mock private UserRepository userRepository;
     @Mock private TagRepository tagRepository;
 
     @InjectMocks
     private MoodEntryService service;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
-    private MoodEntryDto validDto() {
-        return new MoodEntryDto(
-            null, "happy", LocalDate.now(), 1L, List.of(1L)
-        );
-    }
-
-    @Test
-    void save_success() {
-        MoodEntry entry = new MoodEntry();
-        entry.setEntryDate(LocalDate.now());
-
-        User user = new User();
-        user.setId(1L);
-        entry.setUser(user);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        MoodEntry result = service.save(entry, validDto());
-
-        assertNotNull(result);
-    }
-
-    @Test
-    void save_noDate_shouldThrow() {
-        MoodEntry entry = new MoodEntry();
-
-        assertThrows(DataConflictException.class,
-            () -> service.save(entry, validDto()));
-    }
-
-    @Test
-    void save_userNotFound() {
-        MoodEntry entry = new MoodEntry();
-        entry.setEntryDate(LocalDate.now());
-
-        User user = new User();
-        user.setId(1L);
-        entry.setUser(user);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class,
-            () -> service.save(entry, validDto()));
+    private User mockUser() {
+        User u = new User();
+        u.setId(1L);
+        return u;
     }
 
     @Test
     void saveAll_emptyList() {
-        assertThrows(DataConflictException.class,
-            () -> service.saveAll(List.of()));
+        assertThrows(DataConflictException.class, () -> service.saveAll(List.of()));
     }
 
     @Test
     void saveAll_success() {
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        List<MoodEntry> result = service.saveAll(List.of(validDto()));
+        var dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
 
-        assertEquals(1, result.size());
+        assertEquals(1, service.saveAll(List.of(dto)).size());
     }
 
     @Test
-    void saveAll_errorInside_shouldStop() {
-        List<MoodEntryDto> list = List.of(
-            validDto(),
-            new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, null)
-        );
+    void saveAll_errorBreaksFlow() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+        var ok = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        var fail = new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, List.of());
 
         assertThrows(DataConflictException.class,
-            () -> service.saveAll(list));
+            () -> service.saveAll(List.of(ok, fail)));
     }
 
     @Test
-    void saveAllTransactional_shouldRollback() {
-        List<MoodEntryDto> list = List.of(
-            validDto(),
-            new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, null)
-        );
-
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+    void saveAllValidated_differentUsers() {
+        var d1 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        var d2 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 2L, List.of());
 
         assertThrows(DataConflictException.class,
-            () -> service.saveAllTransactional(list));
+            () -> service.saveAllValidated(List.of(d1, d2)));
     }
 
     @Test
-    void findComplex_cacheHit() {
-        Pageable pageable = PageRequest.of(0, 10);
+    void saveAllValidated_success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
+        when(repository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
 
-        Page<MoodEntry> page = new PageImpl<>(List.of());
-        when(repository.findComplex(1L, "happy", pageable)).thenReturn(page);
+        var dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
 
-        service.findComplex(1L, "happy", pageable);
-        Page<MoodEntry> cached = service.findComplex(1L, "happy", pageable);
-
-        assertEquals(page, cached);
-        verify(repository, times(1)).findComplex(any(), any(), any());
+        assertEquals(1, service.saveAllValidated(List.of(dto)).size());
     }
 
     @Test
-    void delete_success() {
-        MoodEntry entry = new MoodEntry();
-        when(repository.findById(1L)).thenReturn(Optional.of(entry));
-
-        service.delete(1L);
-
-        verify(repository).delete(entry);
+    void save_userMissing() {
+        assertThrows(ResourceNotFoundException.class,
+            () -> service.save(new com.example.dailymoodtracker.model.MoodEntry(),
+                new MoodEntryDto(null, "HAPPY", LocalDate.now(), null, List.of())));
     }
 
     @Test

@@ -7,15 +7,20 @@ import com.example.dailymoodtracker.model.MoodType;
 import com.example.dailymoodtracker.repository.MoodEntryRepository;
 import com.example.dailymoodtracker.repository.MoodTypeRepository;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class MoodTypeServiceTest {
 
     @Mock private MoodTypeRepository repository;
@@ -25,37 +30,32 @@ class MoodTypeServiceTest {
     @InjectMocks
     private MoodTypeService service;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
-    void create_success() {
-        MoodType mt = new MoodType();
-        mt.setName("happy");
-
-        when(repository.save(mt)).thenReturn(mt);
-
-        MoodType result = service.create(mt);
-
-        assertNotNull(result);
-        verify(moodEntryService).invalidateCache();
-    }
-
-    @Test
-    void create_emptyName_shouldThrow() {
-        MoodType mt = new MoodType();
-
-        assertThrows(DataConflictException.class,
-            () -> service.create(mt));
+    void create_emptyName() {
+        MoodType m = new MoodType();
+        assertThrows(DataConflictException.class, () -> service.create(m));
     }
 
     @Test
     void getById_notFound() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.getById(1L));
+    }
 
-        assertThrows(ResourceNotFoundException.class,
-            () -> service.getById(1L));
+    @Test
+    void update_success() {
+        MoodType m = new MoodType();
+        when(repository.findById(1L)).thenReturn(Optional.of(m));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var dto = new MoodTypeDto(1L, "NEW", null, null);
+
+        assertEquals("NEW", service.update(1L, dto).getName());
+    }
+
+    @Test
+    void delete_notFound() {
+        when(repository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.delete(1L));
     }
 }

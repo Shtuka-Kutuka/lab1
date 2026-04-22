@@ -3,9 +3,12 @@ package com.example.dailymoodtracker.controller;
 import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.mapper.MoodEntryMapper;
 import com.example.dailymoodtracker.service.MoodEntryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,15 +35,11 @@ public class MoodEntryController {
         this.mapper = mapper;
     }
 
-    // ===================== CREATE =====================
-
     @Operation(summary = "Create mood entry")
     @PostMapping
     public MoodEntryDto create(@Valid @RequestBody MoodEntryDto dto) {
         return mapper.toDto(service.save(mapper.toEntity(dto), dto));
     }
-
-    // ===================== BULK =====================
 
     @Operation(summary = "Bulk create WITHOUT transaction")
     @PostMapping("/bulk")
@@ -60,7 +59,14 @@ public class MoodEntryController {
             .toList();
     }
 
-    // ===================== READ =====================
+    @Operation(summary = "Bulk create VALIDATED (business)")
+    @PostMapping("/bulk/validated")
+    public List<MoodEntryDto> bulkValidated(@RequestBody List<MoodEntryDto> dtos) {
+        return service.saveAllValidated(dtos)
+            .stream()
+            .map(mapper::toDto)
+            .toList();
+    }
 
     @Operation(summary = "Get all mood entries")
     @GetMapping
@@ -74,15 +80,11 @@ public class MoodEntryController {
         return service.findByUserId(userId).stream().map(mapper::toDto).toList();
     }
 
-    // ===================== DELETE =====================
-
     @Operation(summary = "Delete mood entry")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
-
-    // ===================== COMPLEX QUERIES =====================
 
     @Operation(summary = "Complex JPQL query")
     @GetMapping("/complex")
