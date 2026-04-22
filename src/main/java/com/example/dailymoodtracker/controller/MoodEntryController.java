@@ -32,11 +32,35 @@ public class MoodEntryController {
         this.mapper = mapper;
     }
 
+    // ===================== CREATE =====================
+
     @Operation(summary = "Create mood entry")
     @PostMapping
     public MoodEntryDto create(@Valid @RequestBody MoodEntryDto dto) {
         return mapper.toDto(service.save(mapper.toEntity(dto), dto));
     }
+
+    // ===================== BULK =====================
+
+    @Operation(summary = "Bulk create WITHOUT transaction")
+    @PostMapping("/bulk")
+    public List<MoodEntryDto> bulk(@RequestBody List<MoodEntryDto> dtos) {
+        return service.saveAll(dtos)
+            .stream()
+            .map(mapper::toDto)
+            .toList();
+    }
+
+    @Operation(summary = "Bulk create WITH transaction")
+    @PostMapping("/bulk/tx")
+    public List<MoodEntryDto> bulkTx(@RequestBody List<MoodEntryDto> dtos) {
+        return service.saveAllTransactional(dtos)
+            .stream()
+            .map(mapper::toDto)
+            .toList();
+    }
+
+    // ===================== READ =====================
 
     @Operation(summary = "Get all mood entries")
     @GetMapping
@@ -50,11 +74,15 @@ public class MoodEntryController {
         return service.findByUserId(userId).stream().map(mapper::toDto).toList();
     }
 
+    // ===================== DELETE =====================
+
     @Operation(summary = "Delete mood entry")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
+
+    // ===================== COMPLEX QUERIES =====================
 
     @Operation(summary = "Complex JPQL query")
     @GetMapping("/complex")
@@ -63,7 +91,8 @@ public class MoodEntryController {
         @RequestParam String moodName,
         Pageable pageable
     ) {
-        return service.findComplex(userId, moodName, pageable).map(mapper::toDto);
+        return service.findComplex(userId, moodName, pageable)
+            .map(mapper::toDto);
     }
 
     @Operation(summary = "Complex native query")
@@ -73,6 +102,7 @@ public class MoodEntryController {
         @RequestParam String moodName,
         Pageable pageable
     ) {
-        return service.findComplexNative(userId, moodName, pageable).map(mapper::toDto);
+        return service.findComplexNative(userId, moodName, pageable)
+            .map(mapper::toDto);
     }
 }
