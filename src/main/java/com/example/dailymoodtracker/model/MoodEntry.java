@@ -121,9 +121,11 @@ public class MoodEntry {
         this.tags = tags;
     }
 
-    public void setMoodTypeId(long l) {
+    public void setMoodTypeId(long moodTypeId) {
+        this.moodTypeId = moodTypeId;
     }
 
-    public void setUserId(long l) {
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
 }

@@ -50,8 +50,9 @@ class MoodEntryServiceTest {
 
     @Test
     void saveAll_emptyList() {
+        List<MoodEntryDto> emptyDtos = List.of();
         assertThrows(DataConflictException.class,
-            () -> service.saveAll(List.of()));
+            () -> service.saveAll(emptyDtos));
     }
 
     @Test
@@ -76,8 +77,9 @@ class MoodEntryServiceTest {
         MoodEntryDto fail =
             new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, List.of());
 
+        List<MoodEntryDto> dtos = List.of(ok, fail);
         assertThrows(DataConflictException.class,
-            () -> service.saveAll(List.of(ok, fail)));
+            () -> service.saveAll(dtos));
     }
 
     @Test
@@ -88,8 +90,9 @@ class MoodEntryServiceTest {
 
     @Test
     void saveAllTransactional_emptyList() {
+        List<MoodEntryDto> emptyDtos = List.of();
         assertThrows(DataConflictException.class,
-            () -> service.saveAllTransactional(List.of()));
+            () -> service.saveAllTransactional(emptyDtos));
     }
 
     @Test
@@ -115,8 +118,9 @@ class MoodEntryServiceTest {
         assertThrows(DataConflictException.class,
             () -> service.saveAllValidated(null));
 
+        List<MoodEntryDto> emptyDtos = List.of();
         assertThrows(DataConflictException.class,
-            () -> service.saveAllValidated(List.of()));
+            () -> service.saveAllValidated(emptyDtos));
     }
 
     @Test
@@ -126,8 +130,9 @@ class MoodEntryServiceTest {
         MoodEntryDto d2 =
             new MoodEntryDto(null, "HAPPY", LocalDate.now(), 2L, List.of());
 
+        List<MoodEntryDto> dtos = List.of(d1, d2);
         assertThrows(DataConflictException.class,
-            () -> service.saveAllValidated(List.of(d1, d2)));
+            () -> service.saveAllValidated(dtos));
     }
 
     @Test

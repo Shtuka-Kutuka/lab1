@@ -63,6 +63,7 @@ public class MoodType {
         return "MoodType{name='" + name + "', emoji='" + emoji + "'}";
     }
 
-    public void setId(long l) {
+    public void setId(long id) {
+        this.id = id;
     }
 }

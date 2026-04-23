@@ -63,6 +63,7 @@ public class Tag {
         return "Tag{name='" + name + "', color='" + color + "'}";
     }
 
-    public void setId(long l) {
+    public void setId(long id) {
+        this.id = id;
     }
 }
