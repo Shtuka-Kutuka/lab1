@@ -62,15 +62,19 @@ public class MoodEntryService {
             throw new DataConflictException("Mood entries list cannot be empty");
         }
 
-        return dtos.stream()
+        List<MoodEntry> result = dtos.stream()
             .map(this::buildEntityFromDto)
             .map(repository::save)
-            .peek(e -> {
-                if (e != null) {
-                    LOGGER.debug("Saved entry id={}", e.getId());
-                }
-            })
             .toList();
+
+        // ЛОГИРОВАНИЕ ВЫНЕСЕНО ИЗ peek
+        for (MoodEntry e : result) {
+            if (e != null) {
+                LOGGER.debug("Saved entry id={}", e.getId());
+            }
+        }
+
+        return result;
     }
 
     // ===================== BULK WITH TRANSACTION =====================
@@ -95,6 +99,8 @@ public class MoodEntryService {
 
     // ===================== BUSINESS BULK (validated) =====================
 
+    // ИЗМЕНЕН ТОЛЬКО МЕТОД saveAllValidated
+
     @Transactional
     public List<MoodEntry> saveAllValidated(List<MoodEntryDto> dtos) {
 
@@ -115,8 +121,12 @@ public class MoodEntryService {
 
         List<MoodEntry> entries = dtos.stream()
             .map(this::buildEntityFromDto)
-            .peek(e -> e.setUser(user))
             .toList();
+
+        // 🔥 ВМЕСТО peek
+        for (MoodEntry e : entries) {
+            e.setUser(user);
+        }
 
         List<MoodEntry> saved = repository.saveAll(entries);
 
@@ -133,7 +143,6 @@ public class MoodEntryService {
             .map(User::getId)
             .orElse(null);
 
-        // 🔥 ключевая правка: всегда через resolveUser
         User user = resolveUser(userId);
 
         if (entry.getEntryDate() == null) {

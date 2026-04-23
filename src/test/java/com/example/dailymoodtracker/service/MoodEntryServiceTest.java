@@ -42,7 +42,8 @@ class MoodEntryServiceTest {
 
     @Test
     void saveAll_emptyList() {
-        assertThrows(DataConflictException.class, () -> service.saveAll(List.of()));
+        List<MoodEntryDto> list = List.of();
+        assertThrows(DataConflictException.class, () -> service.saveAll(list));
     }
 
     @Test
@@ -50,29 +51,34 @@ class MoodEntryServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        MoodEntryDto dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        List<MoodEntryDto> list = List.of(dto);
 
-        assertEquals(1, service.saveAll(List.of(dto)).size());
+        assertEquals(1, service.saveAll(list).size());
     }
 
     @Test
     void saveAll_errorBreaksFlow() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
 
-        var ok = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
-        var fail = new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, List.of());
+        MoodEntryDto ok = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        MoodEntryDto fail = new MoodEntryDto(null, "ERROR", LocalDate.now(), 1L, List.of());
+
+        List<MoodEntryDto> list = List.of(ok, fail);
 
         assertThrows(DataConflictException.class,
-            () -> service.saveAll(List.of(ok, fail)));
+            () -> service.saveAll(list));
     }
 
     @Test
     void saveAllValidated_differentUsers() {
-        var d1 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
-        var d2 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 2L, List.of());
+        MoodEntryDto d1 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        MoodEntryDto d2 = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 2L, List.of());
+
+        List<MoodEntryDto> list = List.of(d1, d2);
 
         assertThrows(DataConflictException.class,
-            () -> service.saveAllValidated(List.of(d1, d2)));
+            () -> service.saveAllValidated(list));
     }
 
     @Test
@@ -80,23 +86,30 @@ class MoodEntryServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser()));
         when(repository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
 
-        var dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        MoodEntryDto dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), 1L, List.of());
+        List<MoodEntryDto> list = List.of(dto);
 
-        assertEquals(1, service.saveAllValidated(List.of(dto)).size());
+        assertEquals(1, service.saveAllValidated(list).size());
     }
 
     @Test
     void save_userMissing() {
+        MoodEntryDto dto = new MoodEntryDto(null, "HAPPY", LocalDate.now(), null, List.of());
+
+        com.example.dailymoodtracker.model.MoodEntry entry =
+            new com.example.dailymoodtracker.model.MoodEntry();
+
         assertThrows(ResourceNotFoundException.class,
-            () -> service.save(new com.example.dailymoodtracker.model.MoodEntry(),
-                new MoodEntryDto(null, "HAPPY", LocalDate.now(), null, List.of())));
+            () -> service.save(entry, dto));
     }
 
     @Test
     void delete_notFound() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
 
+        Long id = 1L;
+
         assertThrows(ResourceNotFoundException.class,
-            () -> service.delete(1L));
+            () -> service.delete(id));
     }
 }
