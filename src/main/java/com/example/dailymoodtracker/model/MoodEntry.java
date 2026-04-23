@@ -120,4 +120,10 @@ public class MoodEntry {
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
+
+    public void setMoodTypeId(long l) {
+    }
+
+    public void setUserId(long l) {
+    }
 }

@@ -134,4 +134,52 @@ class GoalServiceTest {
         assertThrows(DataConflictException.class,
             () -> service.createUserWithGoalsNoTransaction(dto));
     }
+    @Test
+    void getAll() {
+        when(goalRepository.findAll()).thenReturn(List.of());
+        assertNotNull(service.getAll());
+    }
+
+    @Test
+    void delete_success() {
+        Goal goal = new Goal();
+        when(goalRepository.findById(1L)).thenReturn(Optional.of(goal));
+
+        service.delete(1L);
+
+        verify(goalRepository).delete(goal);
+    }
+
+    @Test
+    void createUserWithGoals_success() {
+        UserWithGoalsDto dto = new UserWithGoalsDto(
+            "user",
+            "email",
+            List.of(new GoalDto(null, null, "title", "desc", LocalDate.now(), false))
+        );
+
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        assertDoesNotThrow(() -> service.createUserWithGoalsWithTransaction(dto));
+    }
+
+    @Test
+    void createUserWithGoals_multipleGoals() {
+        UserWithGoalsDto dto = new UserWithGoalsDto(
+            "user",
+            "email",
+            List.of(
+                new GoalDto(null, null, "t1", null, LocalDate.now(), false),
+                new GoalDto(null, null, "t2", null, LocalDate.now(), true)
+            )
+        );
+
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(goalRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        service.createUserWithGoalsNoTransaction(dto);
+
+        verify(goalRepository, times(2)).save(any());
+    }
 }

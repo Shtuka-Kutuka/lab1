@@ -54,7 +54,6 @@ public class MoodEntryService {
         this.tagRepository = tagRepository;
     }
 
-    // ===================== BULK WITHOUT TRANSACTION =====================
 
     public List<MoodEntry> saveAll(List<MoodEntryDto> dtos) {
 
@@ -67,7 +66,6 @@ public class MoodEntryService {
             .map(repository::save)
             .toList();
 
-        // ЛОГИРОВАНИЕ ВЫНЕСЕНО ИЗ peek
         for (MoodEntry e : result) {
             if (e != null) {
                 LOGGER.debug("Saved entry id={}", e.getId());
@@ -76,8 +74,6 @@ public class MoodEntryService {
 
         return result;
     }
-
-    // ===================== BULK WITH TRANSACTION =====================
 
     @Transactional
     public List<MoodEntry> saveAllTransactional(List<MoodEntryDto> dtos) {
@@ -96,10 +92,6 @@ public class MoodEntryService {
 
         return result;
     }
-
-    // ===================== BUSINESS BULK (validated) =====================
-
-    // ИЗМЕНЕН ТОЛЬКО МЕТОД saveAllValidated
 
     @Transactional
     public List<MoodEntry> saveAllValidated(List<MoodEntryDto> dtos) {
@@ -123,7 +115,6 @@ public class MoodEntryService {
             .map(this::buildEntityFromDto)
             .toList();
 
-        // 🔥 ВМЕСТО peek
         for (MoodEntry e : entries) {
             e.setUser(user);
         }
@@ -135,7 +126,6 @@ public class MoodEntryService {
         return saved;
     }
 
-    // ===================== SINGLE SAVE =====================
 
     public MoodEntry save(MoodEntry entry, MoodEntryDto dto) {
 
@@ -158,7 +148,6 @@ public class MoodEntryService {
         return repository.save(entry);
     }
 
-    // ===================== HELPERS =====================
 
     private MoodEntry buildEntityFromDto(MoodEntryDto dto) {
 
@@ -197,8 +186,6 @@ public class MoodEntryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id)))
             .collect(Collectors.toSet());
     }
-
-    // ===================== READ =====================
 
     public List<MoodEntry> findAll() {
         return repository.findAll();

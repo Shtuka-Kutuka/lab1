@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class MoodTypeService {
@@ -30,7 +31,6 @@ public class MoodTypeService {
     }
 
     public MoodType create(MoodType moodType) {
-
         if (moodType.getName() == null || moodType.getName().isBlank()) {
             throw new DataConflictException("Mood name cannot be empty");
         }
@@ -51,6 +51,7 @@ public class MoodTypeService {
 
     @Transactional
     public MoodType update(Long id, MoodTypeDto dto) {
+
         MoodType moodType = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
 
@@ -71,7 +72,6 @@ public class MoodTypeService {
         }
 
         MoodType updated = repository.save(moodType);
-
         moodEntryService.invalidateCache();
 
         return updated;
@@ -79,19 +79,22 @@ public class MoodTypeService {
 
     @Transactional
     public void delete(Long id) {
+
         MoodType moodType = repository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MESSAGE + id));
+
         List<MoodEntry> entries = moodEntryRepository.findAll();
 
         for (MoodEntry entry : entries) {
-            if (entry.getMoodType() != null &&
-                entry.getMoodType().getId().equals(id)) {
+            MoodType entryMood = entry.getMoodType();
+
+            if (entryMood != null
+                && Objects.equals(entryMood.getId(), moodType.getId())) {
                 entry.setMoodType(null);
             }
         }
 
         repository.delete(moodType);
-
         moodEntryService.invalidateCache();
     }
 }

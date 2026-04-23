@@ -62,4 +62,7 @@ public class Tag {
     public String toString() {
         return "Tag{name='" + name + "', color='" + color + "'}";
     }
+
+    public void setId(long l) {
+    }
 }

@@ -10,4 +10,6 @@ public record MoodTypeDto(
 
     String emoji,
     String description
+
+
 ) { }

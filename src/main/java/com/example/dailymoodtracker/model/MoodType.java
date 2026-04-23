@@ -62,4 +62,7 @@ public class MoodType {
     public String toString() {
         return "MoodType{name='" + name + "', emoji='" + emoji + "'}";
     }
+
+    public void setId(long l) {
+    }
 }
