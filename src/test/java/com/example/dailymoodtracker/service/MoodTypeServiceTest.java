@@ -106,7 +106,6 @@ class MoodTypeServiceTest {
         com.example.dailymoodtracker.model.MoodEntry entry =
             new com.example.dailymoodtracker.model.MoodEntry();
 
-        // 🔥 создаём НОВЫЙ объект и явно задаём id
         MoodType entryMood = new MoodType();
         entryMood.setId(1L);
 

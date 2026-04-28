@@ -46,7 +46,6 @@ class MoodEntryServiceTest {
         return u;
     }
 
-    // ---------------- SAVE ALL ----------------
 
     @Test
     void saveAll_emptyList() {
@@ -111,7 +110,6 @@ class MoodEntryServiceTest {
         verify(repository, times(2)).save(any(MoodEntry.class));
     }
 
-    // ---------------- SAVE ALL VALIDATED ----------------
 
     @Test
     void saveAllValidated_nullOrEmpty() {
@@ -148,7 +146,6 @@ class MoodEntryServiceTest {
         assertEquals(1, result.size());
     }
 
-    // ---------------- SAVE ----------------
 
     @Test
     void save_userMissing() {
@@ -211,7 +208,6 @@ class MoodEntryServiceTest {
         assertTrue(result.getTags().contains(tag));
     }
 
-    // ---------------- FIND ----------------
 
     @Test
     void findAll() {
@@ -227,7 +223,6 @@ class MoodEntryServiceTest {
         assertNotNull(service.findByUserId(1L));
     }
 
-    // ---------------- COMPLEX ----------------
 
     @Test
     void findComplex_cacheMiss() {
@@ -300,7 +295,6 @@ class MoodEntryServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    // ---------------- UPDATE ----------------
 
     @Test
     void update_notFound() {
@@ -326,7 +320,6 @@ class MoodEntryServiceTest {
         assertNotNull(service.update(1L, dto));
     }
 
-    // ---------------- DELETE ----------------
 
     @Test
     void delete_notFound() {
@@ -347,7 +340,6 @@ class MoodEntryServiceTest {
         verify(repository).delete(entry);
     }
 
-    // ---------------- CACHE ----------------
 
     @Test
     void invalidateCache() {
