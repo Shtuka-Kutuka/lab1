@@ -2,7 +2,7 @@
 
 ## Run Info
 
-- Date:
+- Date: 
 - Environment:
 - App version/branch:
 

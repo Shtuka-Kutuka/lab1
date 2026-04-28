@@ -66,6 +66,11 @@ public class RaceConditionDemoService {
                     for (int j = 0; j < incrementsPerThread; j++) {
                         operation.run();
                     }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    synchronized (failures) {
+                        failures.add(ex);
+                    }
                 } catch (Exception ex) {
                     synchronized (failures) {
                         failures.add(ex);
@@ -79,7 +84,10 @@ public class RaceConditionDemoService {
         startLatch.countDown();
 
         try {
-            doneLatch.await(20, TimeUnit.SECONDS);
+            boolean completed = doneLatch.await(20, TimeUnit.SECONDS);
+            if (!completed) {
+                throw new IllegalStateException("Race demo timed out");
+            }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Race demo interrupted", ex);

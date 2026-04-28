@@ -79,7 +79,7 @@ public class AsyncTaskRegistryService {
         }
 
         synchronized void updateProgress(int value, String text) {
-            this.progressPercent = Math.max(0, Math.min(100, value));
+            this.progressPercent = Math.clamp(value, 0, 100);
             this.message = text;
         }
 

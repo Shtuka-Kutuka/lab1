@@ -1,0 +1,6 @@
+Label,# Samples,Average,Min,Max,Std. Dev.,Error %,Throughput,Received KB/sec,Sent KB/sec,Avg. Bytes
+Start Async Task,2000,1623,1613,1641,4.19,0.000%,46.63309,8.79,9.15,193.0
+Get Async Task Status,2000,1,0,12,0.78,0.000%,48.52249,19.44,7.72,410.2
+Race Demo Compare,2000,27,14,58,7.62,0.000%,48.51072,17.21,12.51,363.3
+Increment Counter,2000,1,0,10,0.63,0.000%,48.55783,7.42,10.81,156.4
+TOTAL,8000,413,0,1641,698.56,0.000%,186.42369,51.11,38.96,280.7

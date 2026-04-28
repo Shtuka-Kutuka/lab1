@@ -39,6 +39,7 @@ class AsyncTaskRegistryServiceTest {
 
     @Test
     void getTask_unknownId_shouldThrowNotFound() {
-        assertThrows(ResourceNotFoundException.class, () -> service.getTask(UUID.randomUUID()));
+        UUID unknownTaskId = UUID.randomUUID();
+        assertThrows(ResourceNotFoundException.class, () -> service.getTask(unknownTaskId));
     }
 }
