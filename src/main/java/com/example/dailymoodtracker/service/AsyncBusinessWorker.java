@@ -35,8 +35,7 @@ public class AsyncBusinessWorker {
     @Async("businessTaskExecutor")
     public CompletableFuture<Void> executeTask(UUID taskId, int workUnits) {
         try {
-            // `workUnits` сейчас остаётся частью контракта API (например для load-тестов),
-            // но реальная бизнес-операция выполняется один раз: получаем все mood entries.
+
             List<MoodEntry> entries = moodEntryService.findAll();
             long fetched = entries.size();
 
@@ -46,7 +45,6 @@ public class AsyncBusinessWorker {
                 OPERATION_MESSAGE + ": fetched " + fetched + " mood entries"
             );
 
-            // Показываем именно результат "get all mood entry" в поле `result` (список DTO).
             List<MoodEntryDto> dtos = entries.stream()
                 .map(moodEntryMapper::toDto)
                 .toList();
