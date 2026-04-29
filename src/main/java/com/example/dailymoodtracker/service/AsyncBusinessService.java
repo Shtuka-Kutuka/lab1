@@ -17,6 +17,9 @@ public class AsyncBusinessService {
 
     public UUID startTask(int workUnits) {
         UUID taskId = taskRegistryService.createTask();
+        // Маркируем задачу как RUNNING синхронно, чтобы POST возвращал taskId уже
+        // для реально выполняемого бизнес-метода.
+        taskRegistryService.markRunning(taskId, "Executing request: get all mood entry");
         worker.executeTask(taskId, workUnits);
         return taskId;
     }

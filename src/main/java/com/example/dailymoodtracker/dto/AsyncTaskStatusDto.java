@@ -3,6 +3,7 @@ package com.example.dailymoodtracker.dto;
 import com.example.dailymoodtracker.async.AsyncTaskStatus;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record AsyncTaskStatusDto(
@@ -12,5 +13,6 @@ public record AsyncTaskStatusDto(
     Instant startedAt,
     Instant finishedAt,
     int progressPercent,
-    String message
+    String message,
+    List<MoodEntryDto> result
 ) { }

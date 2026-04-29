@@ -1,6 +1,7 @@
 package com.example.dailymoodtracker.service;
 
 import com.example.dailymoodtracker.async.AsyncTaskStatus;
+import com.example.dailymoodtracker.dto.MoodEntryDto;
 import com.example.dailymoodtracker.dto.AsyncTaskStatusDto;
 import com.example.dailymoodtracker.exception.ResourceNotFoundException;
 
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,6 +40,10 @@ public class AsyncTaskRegistryService {
         stateById(taskId).markSuccess(message);
     }
 
+    public void markSuccess(UUID taskId, String message, List<MoodEntryDto> result) {
+        stateById(taskId).markSuccess(message, result);
+    }
+
     public void markFailed(UUID taskId, String message) {
         stateById(taskId).markFailed(message);
     }
@@ -59,6 +65,7 @@ public class AsyncTaskRegistryService {
         private Instant finishedAt;
         private int progressPercent;
         private String message;
+        private List<MoodEntryDto> result;
 
         private TaskState(UUID taskId) {
             this.taskId = taskId;
@@ -66,6 +73,7 @@ public class AsyncTaskRegistryService {
             this.status = AsyncTaskStatus.PENDING;
             this.progressPercent = 0;
             this.message = "Task created";
+            this.result = null;
         }
 
         static TaskState pending(UUID taskId) {
@@ -76,24 +84,32 @@ public class AsyncTaskRegistryService {
             this.status = AsyncTaskStatus.RUNNING;
             this.startedAt = Instant.now();
             this.message = value;
+            this.result = null;
         }
 
         synchronized void updateProgress(int value, String text) {
             this.progressPercent = Math.clamp(value, 0, 100);
             this.message = text;
+            this.result = null;
         }
 
         synchronized void markSuccess(String value) {
+            markSuccess(value, null);
+        }
+
+        synchronized void markSuccess(String value, List<MoodEntryDto> result) {
             this.status = AsyncTaskStatus.SUCCESS;
             this.progressPercent = 100;
             this.finishedAt = Instant.now();
             this.message = value;
+            this.result = result;
         }
 
         synchronized void markFailed(String value) {
             this.status = AsyncTaskStatus.FAILED;
             this.finishedAt = Instant.now();
             this.message = value;
+            this.result = null;
         }
 
         synchronized AsyncTaskStatusDto snapshot() {
@@ -104,7 +120,8 @@ public class AsyncTaskRegistryService {
                 startedAt,
                 finishedAt,
                 progressPercent,
-                message
+                message,
+                result
             );
         }
     }
