@@ -32,9 +32,20 @@ public class AsyncBusinessWorker {
         this.taskRegistryService = taskRegistryService;
     }
 
+    private void simulateDelay() {
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Async task was interrupted", e);
+        }
+    }
+
     @Async("businessTaskExecutor")
     public CompletableFuture<Void> executeTask(UUID taskId, int workUnits) {
         try {
+
+            simulateDelay();
 
             List<MoodEntry> entries = moodEntryService.findAll();
             long fetched = entries.size();
@@ -45,7 +56,6 @@ public class AsyncBusinessWorker {
                 OPERATION_MESSAGE + ": fetched " + fetched + " mood entries"
             );
 
-
             List<MoodEntryDto> dtos = entries.stream()
                 .map(moodEntryMapper::toDto)
                 .toList();
@@ -55,7 +65,9 @@ public class AsyncBusinessWorker {
                 OPERATION_MESSAGE + ": completed",
                 dtos
             );
+
             LOGGER.info("Async task {} completed", taskId);
+
         } catch (Exception ex) {
             taskRegistryService.markFailed(taskId, OPERATION_MESSAGE + ": failed: " + ex.getMessage());
             LOGGER.error("Async task {} failed", taskId, ex);
