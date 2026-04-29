@@ -8,6 +8,7 @@ class DailyMoodtrackerApplicationTests {
 
     @Test
     void contextLoads() {
+        //Request by JPA
     }
 
 }
