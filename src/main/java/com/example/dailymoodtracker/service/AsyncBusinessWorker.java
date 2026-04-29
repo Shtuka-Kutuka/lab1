@@ -45,6 +45,7 @@ public class AsyncBusinessWorker {
                 OPERATION_MESSAGE + ": fetched " + fetched + " mood entries"
             );
 
+
             List<MoodEntryDto> dtos = entries.stream()
                 .map(moodEntryMapper::toDto)
                 .toList();
