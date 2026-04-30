@@ -10,7 +10,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class RaceConditionDemoService {
@@ -30,7 +29,7 @@ public class RaceConditionDemoService {
 
     public RaceDemoResultDto runSafeDemo(int threads, int incrementsPerThread) {
         long expected = (long) threads * incrementsPerThread;
-        long actual = runAtomicCounter(threads, incrementsPerThread);
+        long actual = runSafeCounter(threads, incrementsPerThread);
         return new RaceDemoResultDto(
             "safe",
             threads,
@@ -42,15 +41,15 @@ public class RaceConditionDemoService {
     }
 
     private long runUnsafeCounter(int threads, int incrementsPerThread) {
-        Counter unsafeCounter = new Counter();
-        runConcurrentIncrement(threads, incrementsPerThread, unsafeCounter::increment);
-        return unsafeCounter.get();
+        Counter counter = new Counter(false);
+        runConcurrentIncrement(threads, incrementsPerThread, counter::increment);
+        return counter.get();
     }
 
-    private long runAtomicCounter(int threads, int incrementsPerThread) {
-        AtomicLong safeCounter = new AtomicLong(0);
-        runConcurrentIncrement(threads, incrementsPerThread, safeCounter::incrementAndGet);
-        return safeCounter.get();
+    private long runSafeCounter(int threads, int incrementsPerThread) {
+        Counter counter = new Counter(true);
+        runConcurrentIncrement(threads, incrementsPerThread, counter::increment);
+        return counter.get();
     }
 
     private void runConcurrentIncrement(int threads, int incrementsPerThread, Runnable operation) {
@@ -102,12 +101,28 @@ public class RaceConditionDemoService {
 
     private static final class Counter {
         private long value;
+        private final boolean threadSafe;
+
+        Counter(boolean threadSafe) {
+            this.threadSafe = threadSafe;
+        }
 
         void increment() {
-            value++;
+            if (threadSafe) {
+                synchronized (this) {
+                    value++;
+                }
+            } else {
+                value++; // небезопасно
+            }
         }
 
         long get() {
+            if (threadSafe) {
+                synchronized (this) {
+                    return value;
+                }
+            }
             return value;
         }
     }
