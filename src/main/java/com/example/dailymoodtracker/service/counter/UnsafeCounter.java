@@ -5,7 +5,7 @@ public class UnsafeCounter implements Counter {
 
     @Override
     public void increment() {
-        value++; // race condition
+        value++;
     }
 
     @Override
