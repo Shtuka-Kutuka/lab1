@@ -3,6 +3,9 @@ package com.example.dailymoodtracker.service;
 import com.example.dailymoodtracker.dto.RaceDemoResultDto;
 
 import org.springframework.stereotype.Service;
+import com.example.dailymoodtracker.service.counter.Counter;
+import com.example.dailymoodtracker.service.counter.SafeCounter;
+import com.example.dailymoodtracker.service.counter.UnsafeCounter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,13 +44,13 @@ public class RaceConditionDemoService {
     }
 
     private long runUnsafeCounter(int threads, int incrementsPerThread) {
-        Counter counter = new Counter(false);
+        Counter counter = new UnsafeCounter();
         runConcurrentIncrement(threads, incrementsPerThread, counter::increment);
         return counter.get();
     }
 
     private long runSafeCounter(int threads, int incrementsPerThread) {
-        Counter counter = new Counter(true);
+        Counter counter = new SafeCounter();
         runConcurrentIncrement(threads, incrementsPerThread, counter::increment);
         return counter.get();
     }
@@ -96,34 +99,6 @@ public class RaceConditionDemoService {
 
         if (!failures.isEmpty()) {
             throw new IllegalStateException("Race demo execution failed", failures.get(0));
-        }
-    }
-
-    private static final class Counter {
-        private long value;
-        private final boolean threadSafe;
-
-        Counter(boolean threadSafe) {
-            this.threadSafe = threadSafe;
-        }
-
-        void increment() {
-            if (threadSafe) {
-                synchronized (this) {
-                    value++;
-                }
-            } else {
-                value++; // небезопасно
-            }
-        }
-
-        long get() {
-            if (threadSafe) {
-                synchronized (this) {
-                    return value;
-                }
-            }
-            return value;
         }
     }
 }
