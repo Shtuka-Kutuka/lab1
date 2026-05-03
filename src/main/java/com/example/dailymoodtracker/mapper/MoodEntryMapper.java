@@ -43,11 +43,9 @@ public class MoodEntryMapper {
         MoodEntry entity = new MoodEntry();
         entity.setEntryDate(dto.date());
 
-        if (dto.userId() != null) {
-            User user = new User();
-            user.setId(dto.userId());
-            entity.setUser(user);
-        }
+        User user = new User();
+        user.setId(dto.userId());
+        entity.setUser(user);
 
         return entity;
     }
