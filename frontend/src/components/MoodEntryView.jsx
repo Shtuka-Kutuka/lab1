@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { deleteMood } from '../api/api';
+import { useModal } from '../context/ModalContext';
 
 export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChange, onDeleteAll, onMoodDeleted }) {
+    const { showAlert, showConfirm } = useModal();
     const [isEditingNote, setIsEditingNote] = useState(false);
     const [tempNote, setTempNote] = useState(note);
     const [deletingIds, setDeletingIds] = useState([]);
 
+    // Карта эмодзи для отображения
     const getEmoji = (moodName) => {
         const emojiMap = {
             "Радость": "😊", "Раздражение": "😤", "Тревога": "😟", "Скука": "😑",
@@ -18,6 +21,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         return emojiMap[moodName] || "😐";
     };
 
+    // Сбор уникальных тегов за день
     const getAllUniqueTags = () => {
         const allTags = [];
         moods.forEach(entry => {
@@ -32,50 +36,55 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         return allTags;
     };
 
+    // Сохранение заметки
     const handleSaveNote = () => {
         onNoteChange(tempNote);
         setIsEditingNote(false);
+        showAlert('Успех!', 'Заметка сохранена');
     };
 
+    // Удаление только заметки
     const handleDeleteNote = () => {
-        if (window.confirm('Удалить заметку без удаления эмоций?')) {
+        showConfirm('Удалить заметку', 'Удалить заметку без удаления эмоций?', () => {
             onNoteChange('');
             setTempNote('');
             setIsEditingNote(false);
-        }
+            showAlert('Успех!', 'Заметка удалена');
+        });
     };
 
-    const handleDeleteAll = async () => {
-        if (!window.confirm(`Удалить ВСЕ эмоции и заметку за ${date}?`)) return;
-        try {
-            // Удаляем каждую эмоциональную запись за этот день
-            for (const entry of moods) {
-                if (entry.id) {
-                    await deleteMood(entry.id);
+    // Удаление ВСЕГО дня (все эмоции + заметка)
+    const handleDeleteAll = () => {
+        showConfirm('Удалить день', `Удалить ВСЕ эмоции и заметку за ${date}?`, async () => {
+            try {
+                for (const entry of moods) {
+                    if (entry.id) await deleteMood(entry.id);
                 }
+                localStorage.removeItem(`note_${date}`);
+                if (onDeleteAll) onDeleteAll();
+                showAlert('Успех!', 'Записи за день удалены');
+            } catch (err) {
+                console.error(err);
+                showAlert('Ошибка', 'Не удалось удалить записи');
             }
-            // Удаляем заметку из localStorage
-            localStorage.removeItem(`note_${date}`);
-            // Уведомляем родителя, чтобы обновить интерфейс
-            if (onDeleteAll) onDeleteAll();
-        } catch (err) {
-            console.error("Delete all error", err);
-            alert("Ошибка при удалении всех записей");
-        }
+        });
     };
 
+    // Удаление одной эмоции
     const handleDeleteMood = async (entryId, moodName) => {
-        if (!window.confirm(`Удалить эмоцию "${moodName}" за ${date}?`)) return;
-        setDeletingIds(prev => [...prev, entryId]);
-        try {
-            await deleteMood(entryId);
-            if (onMoodDeleted) onMoodDeleted(entryId); // уведомляем родителя
-        } catch (err) {
-            console.error("Delete mood error", err);
-            alert("Ошибка при удалении эмоции");
-        } finally {
-            setDeletingIds(prev => prev.filter(id => id !== entryId));
-        }
+        showConfirm('Удалить эмоцию', `Удалить эмоцию "${moodName}" за ${date}?`, async () => {
+            setDeletingIds(prev => [...prev, entryId]);
+            try {
+                await deleteMood(entryId);
+                if (onMoodDeleted) onMoodDeleted(entryId);
+                showAlert('Успех!', `Эмоция "${moodName}" удалена`);
+            } catch (err) {
+                console.error(err);
+                showAlert('Ошибка', 'Не удалось удалить эмоцию');
+            } finally {
+                setDeletingIds(prev => prev.filter(id => id !== entryId));
+            }
+        });
     };
 
     const uniqueTags = getAllUniqueTags();
@@ -92,7 +101,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
                 </button>
             </div>
 
-            {/* Эмоции и их теги */}
+            {/* Список эмоций с кнопками удаления */}
             <div style={{ marginBottom: '20px' }}>
                 <h3>😊 Эмоции дня</h3>
                 {moods.length === 0 ? (
@@ -120,14 +129,14 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
                                 disabled={deletingIds.includes(entry.id)}
                                 style={{ width: 'auto', background: '#EAD8CA', marginLeft: '12px', padding: '6px 12px' }}
                             >
-                                {deletingIds.includes(entry.id) ? '...' : '✖️'}
+                                {deletingIds.includes(entry.id) ? '⌛' : '✖️'}
                             </button>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* Все теги дня */}
+            {/* Общие теги дня */}
             {uniqueTags.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
                     <h3>🏷️ Все теги дня</h3>
@@ -141,7 +150,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
                 </div>
             )}
 
-            {/* Заметка (как раньше) */}
+            {/* Заметка с редактированием */}
             <div className="note-field">
                 <h3>📝 Заметка</h3>
                 {isEditingNote ? (

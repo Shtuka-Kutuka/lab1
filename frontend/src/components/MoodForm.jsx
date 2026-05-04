@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createMood, getTags, getMoodTypes, createMoodType, deleteMoodType } from '../api/api';
+import { useModal } from '../context/ModalContext';
 
+// Начальный пул эмоций (fallback)
 const fallbackMoods = [
     { name: "Радость", emoji: "😊" }, { name: "Раздражение", emoji: "😤" },
     { name: "Тревога", emoji: "😟" }, { name: "Скука", emoji: "😑" },
@@ -18,6 +20,7 @@ const fallbackMoods = [
 const extraEmojis = ["🤗", "😎", "🥳", "😇", "🥲", "🤯", "😶‍🌫️", "🫠", "🤠", "👽"];
 
 export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialNote, onNoteChange, showCancel = true }) {
+    const { showAlert, showConfirm } = useModal();
     const [moodsList, setMoodsList] = useState(fallbackMoods);
     const [selectedMood, setSelectedMood] = useState("Радость");
     const [tags, setTags] = useState([]);
@@ -67,7 +70,7 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
 
     const handleSaveMood = async () => {
         if (!selectedDate) {
-            alert("Выберите день в календаре");
+            showAlert('Внимание', 'Выберите день в календаре');
             return;
         }
         try {
@@ -77,22 +80,22 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
                 userId,
                 tagIds: selectedTagIds
             });
-            alert(`Эмоция "${selectedMood}" сохранена`);
+            showAlert('Успех!', `Эмоция "${selectedMood}" сохранена для ${selectedDate}`);
             if (onMoodSaved) onMoodSaved();
             setSelectedTagIds([]);
         } catch (err) {
-            console.error("Save error", err);
-            alert("Ошибка сохранения");
+            console.error(err);
+            showAlert('Ошибка', 'Не удалось сохранить эмоцию');
         }
     };
 
     const handleCreateEmoji = async () => {
         if (!newEmojiName.trim()) {
-            alert("Введите название эмоции");
+            showAlert('Внимание', 'Введите название эмоции');
             return;
         }
         if (!newEmojiSymbol.trim()) {
-            alert("Выберите или введите смайлик");
+            showAlert('Внимание', 'Выберите или введите смайлик');
             return;
         }
         try {
@@ -101,31 +104,31 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
             setShowAddEmoji(false);
             setNewEmojiName("");
             setNewEmojiSymbol("😊");
-            alert("Эмоция добавлена!");
+            showAlert('Успех!', 'Эмоция добавлена в список');
         } catch (err) {
-            console.error("Create mood type error", err);
-            alert("Ошибка создания эмоции");
+            console.error(err);
+            showAlert('Ошибка', 'Не удалось создать эмоцию');
         }
     };
 
     const handleDeleteMoodType = async (id, name) => {
-        if (!window.confirm(`Удалить эмоцию "${name}"? Все записи с этой эмоцией потеряют привязку к типу.`)) return;
-        setDeletingMoodId(id);
-        try {
-            await deleteMoodType(id);
-            await fetchMoodTypes(); // обновляем список
-            // Если удалённая эмоция была выбрана, сбросим выбор на первую доступную
-            if (selectedMood === name) {
-                const newList = moodsList.filter(m => m.id !== id);
-                if (newList.length > 0) setSelectedMood(newList[0].name);
+        showConfirm('Удаление эмоции', `Удалить эмоцию "${name}"? Все записи с этой эмоцией потеряют привязку к типу.`, async () => {
+            setDeletingMoodId(id);
+            try {
+                await deleteMoodType(id);
+                await fetchMoodTypes();
+                if (selectedMood === name) {
+                    const newList = moodsList.filter(m => m.id !== id);
+                    if (newList.length > 0) setSelectedMood(newList[0].name);
+                }
+                showAlert('Успех!', 'Эмоция удалена из списка');
+            } catch (err) {
+                console.error(err);
+                showAlert('Ошибка', 'Не удалось удалить эмоцию');
+            } finally {
+                setDeletingMoodId(null);
             }
-            alert("Эмоция удалена");
-        } catch (err) {
-            console.error("Delete mood type error", err);
-            alert("Ошибка удаления эмоции");
-        } finally {
-            setDeletingMoodId(null);
-        }
+        });
     };
 
     const quickMoods = moodsList.slice(0, 5);
@@ -204,7 +207,7 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
                             </div>
                         ))}
                     </div>
-                    {/* Кнопка добавления новой эмоции */}
+                    {/* Форма создания новой эмоции */}
                     <div style={{ marginTop: '12px', borderTop: '1px solid #EAD8CA', paddingTop: '10px' }}>
                         {!showAddEmoji ? (
                             <button onClick={() => setShowAddEmoji(true)} style={{ width: '100%', background: '#C2A07E', color: 'white' }}>
@@ -256,7 +259,7 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
                 />
             </div>
 
-            {/* Теги */}
+            {/* Теги для эмоции */}
             <div className="tags-section">
                 <h3>🏷️ теги для этой эмоции</h3>
                 <div className="quick-tags">
