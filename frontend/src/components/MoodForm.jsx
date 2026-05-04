@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { createMood, getTags, getMoodTypes, createMoodType, deleteMoodType } from '../api/api';
-import { useModal } from '../context/ModalContext';
-
+import { getTags, getMoodTypes, createMoodType, deleteMoodType, saveAllMoods } from '../api/api';
+import { useToast } from '../context/ToastContext';
+import { useModal } from '../context/ModalContext'; // для удаления эмоции (оставляем confirm)
 
 const fallbackMoods = [
     { name: "Радость", emoji: "😊" }, { name: "Раздражение", emoji: "😤" },
@@ -16,13 +16,13 @@ const fallbackMoods = [
     { name: "Ностальгия", emoji: "🥺" }, { name: "Гордость", emoji: "😌" },
     { name: "Благодарность", emoji: "🙏" }
 ];
-
 const extraEmojis = ["🤗", "😎", "🥳", "😇", "🥲", "🤯", "😶‍🌫️", "🫠", "🤠", "👽"];
 
 export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialNote, onNoteChange, showCancel = true }) {
-    const { showAlert, showConfirm } = useModal();
-    const [moodsList, setMoodsList] = useState(fallbackMoods);
-    const [selectedMood, setSelectedMood] = useState("Радость");
+    const { showToast } = useToast();
+    const { showConfirm } = useModal();
+    const [availableMoods, setAvailableMoods] = useState(fallbackMoods);
+    const [selectedMoods, setSelectedMoods] = useState([]);
     const [tags, setTags] = useState([]);
     const [selectedTagIds, setSelectedTagIds] = useState([]);
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
     const fetchMoodTypes = async () => {
         try {
             const res = await getMoodTypes();
-            if (res.data && res.data.length) setMoodsList(res.data);
+            if (res.data && res.data.length) setAvailableMoods(res.data);
         } catch (err) {
             console.warn("Using fallback moods", err);
         }
@@ -68,34 +68,51 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
         if (onNoteChange) onNoteChange(newNote);
     };
 
-    const handleSaveMood = async () => {
+    const addMood = (mood) => {
+        if (!selectedMoods.some(m => m.name === mood.name)) {
+            setSelectedMoods([...selectedMoods, mood]);
+        }
+    };
+
+    const removeMood = (moodName) => {
+        setSelectedMoods(selectedMoods.filter(m => m.name !== moodName));
+    };
+
+    const handleSaveMoods = async () => {
         if (!selectedDate) {
-            showAlert('Внимание', 'Выберите день в календаре');
+            showToast('Выберите день в календаре', 'warning');
             return;
         }
+        if (selectedMoods.length === 0) {
+            showToast('Выберите хотя бы одну эмоцию', 'warning');
+            return;
+        }
+        const dtos = selectedMoods.map(mood => ({
+            mood: mood.name,
+            date: selectedDate,
+            userId,
+            tagIds: selectedTagIds,
+            note: note || null
+        }));
         try {
-            await createMood({
-                mood: selectedMood,
-                date: selectedDate,
-                userId,
-                tagIds: selectedTagIds
-            });
-            showAlert('Успех!', `Эмоция "${selectedMood}" сохранена для ${selectedDate}`);
-            if (onMoodSaved) onMoodSaved();
+            await saveAllMoods(dtos);
+            showToast(`✓ Сохранено ${selectedMoods.length} эмоций`, 'success');
+            setSelectedMoods([]);
             setSelectedTagIds([]);
+            if (onMoodSaved) onMoodSaved();
         } catch (err) {
             console.error(err);
-            showAlert('Ошибка', 'Не удалось сохранить эмоцию');
+            showToast('Ошибка сохранения', 'error');
         }
     };
 
     const handleCreateEmoji = async () => {
         if (!newEmojiName.trim()) {
-            showAlert('Внимание', 'Введите название эмоции');
+            showToast('Введите название эмоции', 'warning');
             return;
         }
         if (!newEmojiSymbol.trim()) {
-            showAlert('Внимание', 'Выберите или введите смайлик');
+            showToast('Выберите или введите смайлик', 'warning');
             return;
         }
         try {
@@ -104,35 +121,32 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
             setShowAddEmoji(false);
             setNewEmojiName("");
             setNewEmojiSymbol("😊");
-            showAlert('Успех!', 'Эмоция добавлена в список');
+            showToast('Эмоция создана', 'success');
         } catch (err) {
-            console.error(err);
-            showAlert('Ошибка', 'Не удалось создать эмоцию');
+            showToast('Ошибка создания', 'error');
         }
     };
 
     const handleDeleteMoodType = async (id, name) => {
-        showConfirm('Удаление эмоции', `Удалить эмоцию "${name}"? Все записи с этой эмоцией потеряют привязку к типу.`, async () => {
+        showConfirm('Удаление эмоции', `Удалить "${name}"? Записи потеряют привязку.`, async () => {
             setDeletingMoodId(id);
             try {
                 await deleteMoodType(id);
                 await fetchMoodTypes();
-                if (selectedMood === name) {
-                    const newList = moodsList.filter(m => m.id !== id);
-                    if (newList.length > 0) setSelectedMood(newList[0].name);
+                if (selectedMoods.some(m => m.name === name)) {
+                    setSelectedMoods(selectedMoods.filter(m => m.name !== name));
                 }
-                showAlert('Успех!', 'Эмоция удалена из списка');
+                showToast('Эмоция удалена', 'success');
             } catch (err) {
-                console.error(err);
-                showAlert('Ошибка', 'Не удалось удалить эмоцию');
+                showToast('Ошибка удаления', 'error');
             } finally {
                 setDeletingMoodId(null);
             }
         });
     };
 
-    const quickMoods = moodsList.slice(0, 5);
-    const filteredMoods = moodsList.filter(m =>
+    const quickMoods = availableMoods.slice(0, 5);
+    const filteredMoods = availableMoods.filter(m =>
         m.name.toLowerCase().includes(moodSearch.toLowerCase())
     );
     const filteredTags = tags.filter(tag =>
@@ -142,174 +156,108 @@ export default function MoodForm({ selectedDate, onMoodSaved, onCancel, initialN
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2>➕ Добавить эмоцию за {selectedDate}</h2>
+                <h2>➕ Добавить эмоции за {selectedDate}</h2>
                 {showCancel && (
-                    <button onClick={onCancel} style={{ width: 'auto', background: '#EAD8CA' }}>
-                        ✖️ Отмена
-                    </button>
+                    <button onClick={onCancel} style={{ width: 'auto', background: '#EAD8CA' }}>✖️ Отмена</button>
                 )}
             </div>
 
-            {/* Быстрые эмоции */}
-            <div className="quick-moods">
-                {quickMoods.map(mood => (
-                    <div
-                        key={mood.id || mood.name}
-                        className={`mood-chip ${selectedMood === mood.name ? 'active' : ''}`}
-                        onClick={() => setSelectedMood(mood.name)}
-                    >
-                        <span>{mood.emoji || "😐"}</span>
-                        <span>{mood.name}</span>
-                    </div>
-                ))}
-            </div>
-
-            {/* Расширенный список эмоций с кнопками удаления */}
-            <div className="extended-picker">
-                <div className="picker-header" onClick={() => setPickerOpen(!pickerOpen)}>
-                    <span>▼</span>
-                    <span>все эмоции (ещё +{moodsList.length - 5})</span>
-                </div>
-                <div className={`picker-dropdown ${pickerOpen ? 'open' : ''}`}>
-                    <input
-                        type="text"
-                        className="search-mood"
-                        placeholder="поиск эмоции..."
-                        value={moodSearch}
-                        onChange={e => setMoodSearch(e.target.value)}
-                    />
-                    <div className="mood-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                        {filteredMoods.map(mood => (
+            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                {/* Левая колонка – выбор эмоций */}
+                <div style={{ flex: 2, minWidth: '280px' }}>
+                    <div className="quick-moods">
+                        {quickMoods.map(mood => (
                             <div
                                 key={mood.id || mood.name}
-                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}
+                                className="mood-chip"
+                                onClick={() => addMood(mood)}
                             >
-                                <div
-                                    className="mood-option"
-                                    onClick={() => {
-                                        setSelectedMood(mood.name);
-                                        setPickerOpen(false);
-                                        setMoodSearch("");
-                                    }}
-                                    style={{ flex: 1 }}
-                                >
-                                    <span>{mood.emoji || "😐"}</span>
-                                    <span>{mood.name}</span>
-                                </div>
-                                <button
-                                    onClick={() => handleDeleteMoodType(mood.id, mood.name)}
-                                    disabled={deletingMoodId === mood.id}
-                                    style={{ width: 'auto', background: '#EAD8CA', marginLeft: '8px', padding: '4px 8px' }}
-                                    title="Удалить эмоцию навсегда"
-                                >
-                                    {deletingMoodId === mood.id ? '⌛' : '🗑️'}
-                                </button>
+                                <span>{mood.emoji || "😐"}</span>
+                                <span>{mood.name}</span>
                             </div>
                         ))}
                     </div>
-                    {/* Форма создания новой эмоции */}
-                    <div style={{ marginTop: '12px', borderTop: '1px solid #EAD8CA', paddingTop: '10px' }}>
-                        {!showAddEmoji ? (
-                            <button onClick={() => setShowAddEmoji(true)} style={{ width: '100%', background: '#C2A07E', color: 'white' }}>
-                                ➕ Создать свою эмоцию
-                            </button>
-                        ) : (
-                            <div style={{ background: '#FFF9F2', padding: '10px', borderRadius: '20px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Название эмоции"
-                                    value={newEmojiName}
-                                    onChange={e => setNewEmojiName(e.target.value)}
-                                    style={{ width: '100%', marginBottom: '8px', padding: '6px', borderRadius: '20px', border: '1px solid #EAD8CA' }}
-                                />
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="Смайлик"
-                                        value={newEmojiSymbol}
-                                        onChange={e => setNewEmojiSymbol(e.target.value)}
-                                        style={{ width: '80px', textAlign: 'center', fontSize: '1.5rem', padding: '4px', borderRadius: '20px', border: '1px solid #EAD8CA' }}
-                                    />
-                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                        {extraEmojis.map(emo => (
-                                            <span key={emo} onClick={() => setNewEmojiSymbol(emo)} style={{ fontSize: '1.5rem', cursor: 'pointer', padding: '4px', background: '#F0E2D4', borderRadius: '50%', width: '36px', textAlign: 'center' }}>
-                                                {emo}
-                                            </span>
-                                        ))}
+
+                    <div className="extended-picker">
+                        <div className="picker-header" onClick={() => setPickerOpen(!pickerOpen)}>
+                            <span>▼</span>
+                            <span>все эмоции (ещё +{availableMoods.length - 5})</span>
+                        </div>
+                        <div className={`picker-dropdown ${pickerOpen ? 'open' : ''}`}>
+                            <input type="text" className="search-mood" placeholder="поиск эмоции..." value={moodSearch} onChange={e => setMoodSearch(e.target.value)} />
+                            <div className="mood-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                {filteredMoods.map(mood => (
+                                    <div key={mood.id || mood.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                        <div className="mood-option" onClick={() => { addMood(mood); setPickerOpen(false); setMoodSearch(""); }} style={{ flex: 1 }}>
+                                            <span>{mood.emoji || "😐"}</span>
+                                            <span>{mood.name}</span>
+                                        </div>
+                                        <button onClick={() => handleDeleteMoodType(mood.id, mood.name)} disabled={deletingMoodId === mood.id} style={{ background: '#EAD8CA', width: 'auto', marginLeft: '8px', padding: '4px 8px' }}>🗑️</button>
                                     </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                                    <button onClick={handleCreateEmoji} style={{ width: 'auto', background: '#C2A07E', color: 'white' }}>Сохранить</button>
-                                    <button onClick={() => setShowAddEmoji(false)} style={{ width: 'auto', background: '#EAD8CA' }}>Отмена</button>
+                                ))}
+                            </div>
+                            <div style={{ marginTop: '12px', borderTop: '1px solid #EAD8CA', paddingTop: '10px' }}>
+                                {!showAddEmoji ? (
+                                    <button onClick={() => setShowAddEmoji(true)} style={{ width: '100%', background: '#C2A07E', color: 'white' }}>➕ Создать свою эмоцию</button>
+                                ) : (
+                                    <div style={{ background: '#FFF9F2', padding: '10px', borderRadius: '20px' }}>
+                                        <input type="text" placeholder="Название эмоции" value={newEmojiName} onChange={e => setNewEmojiName(e.target.value)} style={{ width: '100%', marginBottom: '8px', padding: '6px', borderRadius: '20px', border: '1px solid #EAD8CA' }} />
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <input type="text" placeholder="Смайлик" value={newEmojiSymbol} onChange={e => setNewEmojiSymbol(e.target.value)} style={{ width: '80px', textAlign: 'center', fontSize: '1.5rem', padding: '4px', borderRadius: '20px', border: '1px solid #EAD8CA' }} />
+                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                {extraEmojis.map(emo => <span key={emo} onClick={() => setNewEmojiSymbol(emo)} style={{ fontSize: '1.5rem', cursor: 'pointer', padding: '4px', background: '#F0E2D4', borderRadius: '50%', width: '36px', textAlign: 'center' }}>{emo}</span>)}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                                            <button onClick={handleCreateEmoji} style={{ width: 'auto', background: '#C2A07E', color: 'white' }}>Сохранить</button>
+                                            <button onClick={() => setShowAddEmoji(false)} style={{ width: 'auto', background: '#EAD8CA' }}>Отмена</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="note-field">
+                        <textarea className="auto-textarea" rows="2" placeholder="Заметка к этому дню" value={note} onChange={handleNoteChange} />
+                    </div>
+
+                    <div className="tags-section">
+                        <h3>🏷️ теги для эмоций</h3>
+                        <div className="quick-tags">
+                            {tags.slice(0, 4).map(tag => (
+                                <div key={tag.id} className={`tag-chip ${selectedTagIds.includes(tag.id) ? 'active' : ''}`} onClick={() => {
+                                    if (selectedTagIds.includes(tag.id)) setSelectedTagIds(selectedTagIds.filter(id => id !== tag.id));
+                                    else setSelectedTagIds([...selectedTagIds, tag.id]);
+                                }}>{tag.name}</div>
+                            ))}
+                        </div>
+                        <div className="extended-tags">
+                            <div className="tags-header" onClick={() => setTagsPickerOpen(!tagsPickerOpen)}><span>▼</span><span>все хэштеги</span></div>
+                            <div className={`tags-dropdown ${tagsPickerOpen ? 'open' : ''}`}>
+                                <input type="text" className="tag-search" placeholder="поиск тега..." value={tagSearch} onChange={e => setTagSearch(e.target.value)} />
+                                <div className="all-tags-list">
+                                    {filteredTags.map(tag => <div key={tag.id} className="tag-option" onClick={() => { if (!selectedTagIds.includes(tag.id)) setSelectedTagIds([...selectedTagIds, tag.id]); }}>{tag.name}</div>)}
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
+
+                    <button onClick={handleSaveMoods}>💾 Сохранить все эмоции</button>
                 </div>
-            </div>
 
-            {/* Заметка */}
-            <div className="note-field">
-                <textarea
-                    className="auto-textarea"
-                    rows="2"
-                    placeholder="Заметка к этому дню"
-                    value={note}
-                    onChange={handleNoteChange}
-                />
-            </div>
-
-            {/* Теги для эмоции */}
-            <div className="tags-section">
-                <h3>🏷️ теги для этой эмоции</h3>
-                <div className="quick-tags">
-                    {tags.slice(0, 4).map(tag => (
-                        <div
-                            key={tag.id}
-                            className={`tag-chip ${selectedTagIds.includes(tag.id) ? 'active' : ''}`}
-                            onClick={() => {
-                                if (selectedTagIds.includes(tag.id))
-                                    setSelectedTagIds(selectedTagIds.filter(id => id !== tag.id));
-                                else
-                                    setSelectedTagIds([...selectedTagIds, tag.id]);
-                            }}
-                        >
-                            {tag.name}
+                {/* Правая колонка – выбранные эмоции */}
+                <div style={{ flex: 1, background: '#FEFAF5', borderRadius: '28px', padding: '16px', border: '1px solid #EDE0D4', alignSelf: 'start' }}>
+                    <h3>✅ Выбранные эмоции</h3>
+                    {selectedMoods.length === 0 && <p style={{ color: '#B68B70' }}>нет выбранных</p>}
+                    {selectedMoods.map(mood => (
+                        <div key={mood.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', padding: '6px 8px', background: '#FFF9F2', borderRadius: '40px' }}>
+                            <span>{mood.emoji || "😐"} {mood.name}</span>
+                            <button onClick={() => removeMood(mood.name)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✖️</button>
                         </div>
                     ))}
                 </div>
-                <div className="extended-tags">
-                    <div className="tags-header" onClick={() => setTagsPickerOpen(!tagsPickerOpen)}>
-                        <span>▼</span>
-                        <span>все хэштеги</span>
-                    </div>
-                    <div className={`tags-dropdown ${tagsPickerOpen ? 'open' : ''}`}>
-                        <input
-                            type="text"
-                            className="tag-search"
-                            placeholder="поиск тега..."
-                            value={tagSearch}
-                            onChange={e => setTagSearch(e.target.value)}
-                        />
-                        <div className="all-tags-list">
-                            {filteredTags.map(tag => (
-                                <div
-                                    key={tag.id}
-                                    className="tag-option"
-                                    onClick={() => {
-                                        if (!selectedTagIds.includes(tag.id))
-                                            setSelectedTagIds([...selectedTagIds, tag.id]);
-                                    }}
-                                >
-                                    {tag.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
             </div>
-
-            <button onClick={handleSaveMood}>💾 Сохранить эмоцию</button>
         </div>
     );
 }

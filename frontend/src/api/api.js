@@ -28,3 +28,5 @@ export const getMoodTypes = () => API.get("/mood-types");
 export const createMoodType = (data) => API.post("/mood-types", data);
 
 export const deleteMoodType = (id) => API.delete(`/mood-types/${id}`);
+
+export const saveAllMoods = (data) => API.post("/moods/bulk/validated", data);
