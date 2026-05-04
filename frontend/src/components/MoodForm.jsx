@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createMood, getTags, getMoodTypes, createMoodType, deleteMoodType } from '../api/api';
 import { useModal } from '../context/ModalContext';
 
-// Начальный пул эмоций (fallback)
+
 const fallbackMoods = [
     { name: "Радость", emoji: "😊" }, { name: "Раздражение", emoji: "😤" },
     { name: "Тревога", emoji: "😟" }, { name: "Скука", emoji: "😑" },

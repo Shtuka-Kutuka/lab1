@@ -8,7 +8,7 @@ export default function Calendar({ onSelectDate, selectedDate, refreshTrigger })
     const [moodEmojiMap, setMoodEmojiMap] = useState({});
     const userId = 1;
 
-    // Загрузка соответствия эмоций и эмодзи
+
     const loadMoodTypes = async () => {
         try {
             const res = await getMoodTypes();
@@ -19,7 +19,7 @@ export default function Calendar({ onSelectDate, selectedDate, refreshTrigger })
             setMoodEmojiMap(map);
         } catch (err) {
             console.warn("Failed to load mood types", err);
-            // fallback карта
+
             setMoodEmojiMap({
                 "Радость": "😊", "Раздражение": "😤", "Тревога": "😟", "Скука": "😑",
                 "Удивление": "😲", "Восторг": "🤩", "Спокойствие": "😌", "Грусть": "😔",
@@ -53,7 +53,7 @@ export default function Calendar({ onSelectDate, selectedDate, refreshTrigger })
 
     useEffect(() => {
         loadMoods();
-    }, [refreshTrigger]); // обновляем при изменении refreshTrigger
+    }, [refreshTrigger]);
 
     const changeMonth = (delta) => {
         let newMonth = currentMonth + delta;
@@ -87,7 +87,7 @@ export default function Calendar({ onSelectDate, selectedDate, refreshTrigger })
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const moodList = moodsByDate[dateStr] || [];
-            // Для каждой эмоции получаем эмодзи и объединяем
+
             const emojis = moodList.map(mood => getEmojiForMood(mood)).join(' ');
             const hasMood = moodList.length > 0;
             days.push(

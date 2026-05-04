@@ -14,7 +14,7 @@ export default function Dashboard() {
     const [refreshCalendar, setRefreshCalendar] = useState(0);
     const userId = 1;
 
-    // ... функции calculateStreak, loadEntriesForDate, useEffect (те же)
+
 
     const calculateStreak = async () => {
         try {
@@ -94,13 +94,13 @@ export default function Dashboard() {
     };
 
     const handleMoodDeleted = (deletedId) => {
-        // Удаляем удалённую эмоцию из состояния
+
         setExistingMoods(prev => prev.filter(m => m.id !== deletedId));
-        // Если после удаления не осталось эмоций, переключаемся в режим добавления
+
         if (existingMoods.length === 1) {
             setIsAddingMode(true);
         }
-        // Обновляем календарь и серию
+
         setRefreshCalendar(prev => prev + 1);
         calculateStreak();
     };

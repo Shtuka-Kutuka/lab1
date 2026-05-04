@@ -8,7 +8,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
     const [tempNote, setTempNote] = useState(note);
     const [deletingIds, setDeletingIds] = useState([]);
 
-    // Карта эмодзи для отображения
+
     const getEmoji = (moodName) => {
         const emojiMap = {
             "Радость": "😊", "Раздражение": "😤", "Тревога": "😟", "Скука": "😑",
@@ -21,7 +21,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         return emojiMap[moodName] || "😐";
     };
 
-    // Сбор уникальных тегов за день
+
     const getAllUniqueTags = () => {
         const allTags = [];
         moods.forEach(entry => {
@@ -36,14 +36,14 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         return allTags;
     };
 
-    // Сохранение заметки
+
     const handleSaveNote = () => {
         onNoteChange(tempNote);
         setIsEditingNote(false);
         showAlert('Успех!', 'Заметка сохранена');
     };
 
-    // Удаление только заметки
+
     const handleDeleteNote = () => {
         showConfirm('Удалить заметку', 'Удалить заметку без удаления эмоций?', () => {
             onNoteChange('');
@@ -53,7 +53,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         });
     };
 
-    // Удаление ВСЕГО дня (все эмоции + заметка)
+
     const handleDeleteAll = () => {
         showConfirm('Удалить день', `Удалить ВСЕ эмоции и заметку за ${date}?`, async () => {
             try {
@@ -70,7 +70,7 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
         });
     };
 
-    // Удаление одной эмоции
+
     const handleDeleteMood = async (entryId, moodName) => {
         showConfirm('Удалить эмоцию', `Удалить эмоцию "${moodName}" за ${date}?`, async () => {
             setDeletingIds(prev => [...prev, entryId]);
