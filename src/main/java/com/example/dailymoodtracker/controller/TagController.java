@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -52,6 +55,19 @@ public class TagController {
     @PutMapping("/{id}")
     public TagDto update(@PathVariable Long id, @Valid @RequestBody TagDto dto) {
         return mapper.toDto(service.update(id, dto));
+    }
+
+    @GetMapping("/by-date")
+    public List<TagDto> getTagsByDateAndUser(
+        @RequestParam Long userId,
+        @RequestParam String date
+    ) {
+        LocalDate localDate = LocalDate.parse(date);
+
+        return service.findTagsByUserIdAndDate(userId, localDate)
+            .stream()
+            .map(mapper::toDto)
+            .toList();
     }
 
     @Operation(summary = "Delete tag")

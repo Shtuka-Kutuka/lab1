@@ -9,6 +9,7 @@ import com.example.dailymoodtracker.repository.TagRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -23,6 +24,10 @@ public class TagService {
                       MoodEntryService moodEntryService) {
         this.repository = repository;
         this.moodEntryService = moodEntryService;
+    }
+
+    public List<Tag> findTagsByUserIdAndDate(Long userId, LocalDate date) {
+        return repository.findTagsByUserIdAndDate(userId, date);
     }
 
     public Tag create(Tag tag) {
@@ -63,7 +68,6 @@ public class TagService {
         }
 
         Tag updated = repository.save(tag);
-
         moodEntryService.invalidateCache();
 
         return updated;
@@ -81,7 +85,6 @@ public class TagService {
         tag.getMoodEntries().clear();
 
         repository.delete(tag);
-
         moodEntryService.invalidateCache();
     }
 }

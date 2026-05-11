@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./styles/main.css";
 import { ToastProvider } from './context/ToastContext';
-import { ModalProvider } from './context/ModalContext'; // добавить
+import { ModalProvider } from './context/ModalContext';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>

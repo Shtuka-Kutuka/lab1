@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTags, getMoodTypes, createMoodType, deleteMoodType, saveAllMoods } from '../api/api';
 import { useToast } from '../context/ToastContext';
-import { useModal } from '../context/ModalContext'; // для удаления эмоции (оставляем confirm)
+import { useModal } from '../context/ModalContext';
 
 const fallbackMoods = [
     { name: "Радость", emoji: "😊" }, { name: "Раздражение", emoji: "😤" },

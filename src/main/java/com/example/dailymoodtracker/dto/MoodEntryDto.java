@@ -17,5 +17,7 @@ public record MoodEntryDto(
     @NotNull
     Long userId,
 
-    List<Long> tagIds
+    List<Long> tagIds,
+
+    List<TagDto> tags
 ) { }

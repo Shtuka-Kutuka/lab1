@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
+import java.util.List;
 
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
 
@@ -16,7 +18,6 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
         """)
     java.util.List<MoodEntry> findAll();
 
-    java.util.List<MoodEntry> findByUserId(Long userId);
 
     @Query(
         value = """
@@ -57,4 +58,8 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
         nativeQuery = true
     )
     Page<MoodEntry> findComplexNative(Long userId, String moodName, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"tags"})
+    List<MoodEntry> findByUserId(Long userId);
+
 }

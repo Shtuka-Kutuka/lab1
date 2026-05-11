@@ -148,7 +148,6 @@ public class MoodEntryService {
         return repository.save(entry);
     }
 
-
     private MoodEntry buildEntityFromDto(MoodEntryDto dto) {
 
         if ("ERROR".equalsIgnoreCase(dto.mood())) {

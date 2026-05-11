@@ -27,11 +27,15 @@ public class Tag {
     private Set<MoodEntry> moodEntries;
 
     public Tag() {
-        // Required by JPA
+        //Required by JPA
     }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -61,9 +65,5 @@ public class Tag {
     @Override
     public String toString() {
         return "Tag{name='" + name + "', color='" + color + "'}";
-    }
-
-    public void setId(long id) {
-        this.id = id;
     }
 }

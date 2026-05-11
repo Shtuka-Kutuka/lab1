@@ -4,7 +4,9 @@ import com.example.dailymoodtracker.model.Tag;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +25,14 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
         WHERE me.id IN :ids
         """)
     List<Object[]> findTagsByMoodEntryIds(List<Long> ids);
+
+    @Query("""
+        SELECT DISTINCT t
+        FROM Tag t
+        JOIN t.moodEntries me
+        WHERE me.user.id = :userId
+        AND me.entryDate = :date
+        """)
+    List<Tag> findTagsByUserIdAndDate(@Param("userId") Long userId,
+                                      @Param("date") LocalDate date);
 }

@@ -13,6 +13,7 @@ public class TagMapper {
 
     public TagDto toDto(Tag tag) {
         List<Long> moodEntryIds = Collections.emptyList();
+
         if (tag.getMoodEntries() != null) {
             moodEntryIds = tag.getMoodEntries().stream()
                 .map(MoodEntry::getId)

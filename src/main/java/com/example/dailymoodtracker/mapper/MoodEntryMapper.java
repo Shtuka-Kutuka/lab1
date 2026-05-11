@@ -1,6 +1,7 @@
 package com.example.dailymoodtracker.mapper;
 
 import com.example.dailymoodtracker.dto.MoodEntryDto;
+import com.example.dailymoodtracker.dto.TagDto;
 import com.example.dailymoodtracker.model.MoodEntry;
 import com.example.dailymoodtracker.model.Tag;
 import com.example.dailymoodtracker.model.User;
@@ -12,30 +13,41 @@ import java.util.List;
 @Component
 public class MoodEntryMapper {
 
+    private final TagMapper tagMapper;
+
+    public MoodEntryMapper(TagMapper tagMapper) {
+        this.tagMapper = tagMapper;
+    }
+
     public MoodEntryDto toDto(MoodEntry entity) {
-        String moodName = "Unknown";
-        if (entity.getMoodType() != null) {
-            moodName = entity.getMoodType().getName();
-        }
 
-        Long userId = null;
-        if (entity.getUser() != null) {
-            userId = entity.getUser().getId();
-        }
+        String moodName = entity.getMoodType() != null
+            ? entity.getMoodType().getName()
+            : "Unknown";
 
-        List<Long> tagIds = Collections.emptyList();
-        if (entity.getTags() != null) {
-            tagIds = entity.getTags().stream()
-                .map(Tag::getId)
-                .toList();
-        }
+        Long userId = entity.getUser() != null
+            ? entity.getUser().getId()
+            : null;
+
+        List<Long> tagIds = entity.getTags() != null
+            ? entity.getTags().stream()
+            .map(Tag::getId)
+            .toList()
+            : Collections.emptyList();
+
+        List<TagDto> tags = entity.getTags() != null
+            ? entity.getTags().stream()
+            .map(tagMapper::toDto)
+            .toList()
+            : Collections.emptyList();
 
         return new MoodEntryDto(
             entity.getId(),
             moodName,
             entity.getEntryDate(),
             userId,
-            tagIds
+            tagIds,
+            tags
         );
     }
 

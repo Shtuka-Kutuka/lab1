@@ -10,7 +10,6 @@ export default function MoodEntryView({ date, moods, note, onAddNew, onNoteChang
     const [tempNote, setTempNote] = useState(note);
     const [deletingIds, setDeletingIds] = useState([]);
 
-    // Функции для получения имени и эмодзи из разных вариантов ответа API
     const getMoodName = (entry) => {
         return entry.mood || entry.moodType?.name || '?';
     };
